@@ -6,3 +6,6 @@ vim.opt.shiftwidth = 4
 vim.opt.tabstop = 4
 
 vim.opt.cursorline = true
+
+-- Enable true color
+vim.opt.termguicolors = true
