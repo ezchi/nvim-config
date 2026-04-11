@@ -2,8 +2,9 @@
 return {
     {
         "gemini-ai",
+        name = "gemini-ai",
         dir = vim.fn.stdpath("config"),
-        virtual = true,
+        lazy = false, -- CRITICAL: Ensures the autocmd is registered when Neovim starts
         config = function()
             -- AI Commit Message Logic
             _G.generate_gemini_commit_message = function()
@@ -23,7 +24,6 @@ return {
                 diff_handle:close()
 
                 if diff == "" then
-                    print("No staged changes found.")
                     return
                 end
 
@@ -33,7 +33,7 @@ return {
                 f:write(diff)
                 f:close()
 
-                print("Generating commit message...")
+                vim.notify("Generating commit message...", vim.log.levels.INFO)
 
                 -- The full prompt from copilot-chat.el
                 local prompt_text = [[
@@ -149,6 +149,7 @@ Detailed Rules
                 os.remove(tmp_file)
 
                 if result and result ~= "" then
+                    vim.notify("Commit message generated!", vim.log.levels.INFO)
                     -- Insert at cursor or current line
                     local lines = {}
                     for line in result:gmatch("[^\r\n]+") do
@@ -156,9 +157,26 @@ Detailed Rules
                     end
                     vim.api.nvim_put(lines, "l", true, true)
                 else
-                    print("Failed to generate commit message.")
+                    vim.notify("Failed to generate commit message.", vim.log.levels.ERROR)
                 end
             end
+
+            -- Autocmd to generate commit message when opening a commit buffer
+            vim.api.nvim_create_autocmd("FileType", {
+                pattern = "gitcommit",
+                callback = function()
+                    vim.defer_fn(function()
+                        local buf = vim.api.nvim_get_current_buf()
+                        if not vim.api.nvim_buf_is_valid(buf) then return end
+                        
+                        -- Check if the first line is empty (standard for a fresh commit)
+                        local lines = vim.api.nvim_buf_get_lines(buf, 0, 1, false)
+                        if #lines > 0 and lines[1] == "" then
+                            _G.generate_gemini_commit_message()
+                        end
+                    end, 100)
+                end,
+            })
         end,
         keys = {
             {
