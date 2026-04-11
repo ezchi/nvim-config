@@ -1,23 +1,18 @@
 return {
     {
-        "hrsh7th/nvim-cmp",
-        dependencies = {
-            "hrsh7th/cmp-nvim-lsp",
+        "Saghen/blink.cmp",
+        version = "*",
+        opts = {
+            keymap = {
+                preset = "default",
+                ["<C-Space>"] = { "show", "show_documentation", "hide_documentation" },
+                ["<CR>"] = { "accept", "fallback" },
+                ["<Tab>"] = { "select_next", "fallback" },
+                ["<S-Tab>"] = { "select_prev", "fallback" },
+            },
+            sources = {
+                default = { "lsp", "path", "snippets", "buffer" },
+            },
         },
-        config = function()
-            local cmp = require("cmp")
-
-            cmp.setup({
-                mapping = cmp.mapping.preset.insert({
-                    ["<C-Space>"] = cmp.mapping.complete(),
-                    ["<CR>"] = cmp.mapping.confirm({ select = true }),
-                    ["<Tab>"] = cmp.mapping.select_next_item(),
-                    ["<S-Tab>"] = cmp.mapping.select_prev_item(),
-                }),
-                sources = {
-                    { name = "nvim_lsp" },
-                },
-            })
-        end,
     },
 }
