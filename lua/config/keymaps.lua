@@ -30,6 +30,7 @@ wk.add({
     { "<leader>t", group = "Tabs" },
     { "<leader>u", group = "UI Toggles" },
     { "<leader>p", group = "Project/Session" },
+    { "<leader>a", group = "AI" },
 })
 
 -- Session and Project Management
@@ -42,11 +43,3 @@ vim.keymap.set('n', '<leader>pf', builtin.find_files, { desc = 'Telescope find f
 vim.keymap.set('n', '<leader>pg', builtin.live_grep, { desc = 'Telescope live grep' })
 vim.keymap.set('n', '<leader>pb', builtin.buffers, { desc = 'Telescope buffers' })
 vim.keymap.set('n', '<leader>ph', builtin.help_tags, { desc = 'Telescope help tags' })
-
--- AI
-vim.keymap.set("n", "<leader>ag", function()
-    vim.cmd("botright vsplit")
-    local width = math.floor(vim.o.columns / 3)
-    vim.cmd("vertical resize " .. width)
-    vim.cmd("terminal gemini -y")
-end, { desc = "Open Gemini CLI" })
