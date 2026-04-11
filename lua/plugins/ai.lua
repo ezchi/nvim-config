@@ -33,6 +33,16 @@ return {
                 f:write(diff)
                 f:close()
 
+                -- Get the current buffer to insert a placeholder
+                local buf = vim.api.nvim_get_current_buf()
+                local is_git_commit = vim.bo[buf].filetype == "gitcommit"
+                
+                -- Insert placeholder if we are in a commit buffer
+                if is_git_commit then
+                    vim.api.nvim_buf_set_lines(buf, 0, 1, false, { "Generating commit message..." })
+                    vim.cmd("redraw") -- Force redraw so the user sees the placeholder immediately
+                end
+
                 vim.notify("Generating commit message...", vim.log.levels.INFO)
 
                 -- The full prompt from copilot-chat.el
@@ -135,30 +145,44 @@ Detailed Rules
 ### OUTPUT FORMAT
 - Return **only** the commit message text—no code fences, no commentary, no extra markup or explanations.
 - The summary (first) line **must** be imperative, present tense, ≤72 characters, and **must not** end with a period.
+- Ensure there is **EXACTLY ONE blank line** between the subject (first line) and the body.
 - Wrap all body lines at a maximum of 72 characters.
 - If a body is included, format it as a clean, concise bullet list, each line starting with - .
+- Ensure there is **EXACTLY ONE blank line** after the body (before any footers or the end of the message).
 ]]
 
-                -- Run gemini CLI in headless mode
+                -- Run gemini CLI in headless mode asynchronously
                 local cmd = string.format("cat %s | gemini --prompt %s", tmp_file, vim.fn.shellescape(prompt_text))
-                local gemini_handle = io.popen(cmd)
-                local result = gemini_handle:read("*a")
-                gemini_handle:close()
-
-                -- Clean up
-                os.remove(tmp_file)
-
-                if result and result ~= "" then
-                    vim.notify("Commit message generated!", vim.log.levels.INFO)
-                    -- Insert at cursor or current line
-                    local lines = {}
-                    for line in result:gmatch("[^\r\n]+") do
-                        table.insert(lines, line)
+                
+                local result_lines = {}
+                vim.fn.jobstart(cmd, {
+                    stdout_buffered = true,
+                    on_stdout = function(_, data)
+                        if data then
+                            -- Preserve empty lines, but remove trailing empty string added by jobstart
+                            if data[#data] == "" then table.remove(data) end
+                            vim.list_extend(result_lines, data)
+                        end
+                    end,
+                    on_exit = function(_, exit_code)
+                        os.remove(tmp_file)
+                        vim.schedule(function()
+                            if exit_code == 0 and #result_lines > 0 then
+                                if is_git_commit and vim.api.nvim_buf_is_valid(buf) then
+                                    vim.api.nvim_buf_set_lines(buf, 0, 1, false, result_lines)
+                                else
+                                    vim.api.nvim_put(result_lines, "l", true, true)
+                                end
+                                vim.notify("Commit message generated!", vim.log.levels.INFO)
+                            else
+                                if is_git_commit and vim.api.nvim_buf_is_valid(buf) then
+                                    vim.api.nvim_buf_set_lines(buf, 0, 1, false, { "" })
+                                end
+                                vim.notify("Failed to generate commit message.", vim.log.levels.ERROR)
+                            end
+                        end)
                     end
-                    vim.api.nvim_put(lines, "l", true, true)
-                else
-                    vim.notify("Failed to generate commit message.", vim.log.levels.ERROR)
-                end
+                })
             end
 
             -- Autocmd to generate commit message when opening a commit buffer
