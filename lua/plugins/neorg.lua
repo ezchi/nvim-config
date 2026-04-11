@@ -21,10 +21,11 @@ return {
                 load = {
                     ["core.defaults"] = {},
                     ["core.concealer"] = {},
+                    ["core.itero"] = {},
                     ["core.dirman"] = {
                         config = {
                             workspaces = {
-                                notes = "~/Projects/neorg/notes",
+                                notes = "~/Projects/org-gtd/neorg/notes",
                             },
                             default_workspace = "notes",
                         },
