@@ -24,8 +24,6 @@ vim.keymap.set("n", "<leader>un", ":set number!<CR>", { desc = "Toggle number" }
 vim.keymap.set("n", "<leader>ur", ":set relativenumber!<CR>", { desc = "Toggle relative number" })
 
 -- Tab Navigation
-vim.keymap.set("n", "[t", ":tabprevious<CR>", { desc = "Previous Tab" })
-vim.keymap.set("n", "]t", ":tabnext<CR>", { desc = "Next Tab" })
 vim.keymap.set("n", "<leader>tn", ":tabnew<CR>", { desc = "New Tab" })
 vim.keymap.set("n", "<leader>tc", ":tabclose<CR>", { desc = "Close Tab" })
 
