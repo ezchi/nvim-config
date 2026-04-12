@@ -37,9 +37,14 @@ return {
         },
         config = function()
             require("mason-lspconfig").setup({
-                ensure_installed = { "basedpyright" },
+                ensure_installed = { "basedpyright", "clangd" },
             })
         end,
+    },
+
+    {
+        "p00f/clangd_extensions.nvim",
+        opts = {},
     },
 }
 
