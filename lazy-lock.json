@@ -1,6 +1,8 @@
 {
   "blink.cmp": { "branch": "main", "commit": "78336bc89ee5365633bcf754d93df01678b5c08f" },
   "clangd_extensions.nvim": { "branch": "main", "commit": "872893cb061044a4cc7ced59c0f2fe2d70db4382" },
+  "cliproxyapi.nvim": { "branch": "main", "commit": "e708c0e17ec239902b1a7dd291ec46d1a35e0e24" },
+  "git-commit-gen.nvim": { "branch": "main", "commit": "0b40e7e0e699e662577268f5e52f19f0dedab4f7" },
   "gitsigns.nvim": { "branch": "main", "commit": "8d82c240f190fc33723d48c308ccc1ed8baad69d" },
   "lazy.nvim": { "branch": "main", "commit": "306a05526ada86a7b30af95c5cc81ffba93fef97" },
   "lua-utils.nvim": { "branch": "main", "commit": "e565749421f4bbb5d2e85e37c3cef9d56553d8bd" },
