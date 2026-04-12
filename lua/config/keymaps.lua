@@ -5,8 +5,8 @@ vim.keymap.set("n", "<leader>x", ":wq<CR>", { desc = "Save and Quit" })
 
 vim.keymap.set("n", "<leader>h", ":nohlsearch<CR>", { desc = "Clear Search" })
 
-vim.keymap.set("n", "<leader>s", ":split<CR>", { desc = "Horizontal Split" })
-vim.keymap.set("n", "<leader>v", ":vsplit<CR>", { desc = "Vertical Split" })
+vim.keymap.set("n", "<leader>-", ":split<CR>", { desc = "Horizontal Split" })
+vim.keymap.set("n", "<leader>|", ":vsplit<CR>", { desc = "Vertical Split" })
 
 -- Window Navigation
 -- Terminal Navigation
