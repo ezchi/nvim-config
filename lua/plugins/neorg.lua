@@ -21,15 +21,25 @@ return {
                 load = {
                     ["core.defaults"] = {},
                     ["core.concealer"] = {},
+                    ["core.itero"] = {},
+                    ["core.keybinds"] = {},
                     ["core.dirman"] = {
                         config = {
                             workspaces = {
-                                notes = "~/Projects/neorg/notes",
+                                notes = "~/Projects/org-gtd/neorg/notes",
                             },
                             default_workspace = "notes",
                         },
                     },
                 },
+            })
+
+            vim.api.nvim_create_autocmd("FileType", {
+                pattern = "norg",
+                callback = function()
+                    vim.keymap.set("n", "]]", "<Plug>(neorg.treesitter.next.heading)", { buffer = true, desc = "Next Heading" })
+                    vim.keymap.set("n", "[[", "<Plug>(neorg.treesitter.previous.heading)", { buffer = true, desc = "Previous Heading" })
+                end,
             })
         end,
     },

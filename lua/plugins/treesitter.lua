@@ -11,6 +11,7 @@ return {
                     "python",
                     "c",
                     "c++",
+                    "verilog",
                 },
                 highlight = {
                     enable = true,

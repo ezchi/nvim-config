@@ -1,3 +1,4 @@
+
 vim.keymap.set("n", "<leader>w", ":w<CR>", { desc = "Save file" })
 vim.keymap.set("n", "<leader>br", ":edit!<CR>", { desc = "Reload buffer" })
 vim.keymap.set("n", "<leader>q", ":q<CR>", { desc = "Quit" })
@@ -5,8 +6,8 @@ vim.keymap.set("n", "<leader>x", ":wq<CR>", { desc = "Save and Quit" })
 
 vim.keymap.set("n", "<leader>h", ":nohlsearch<CR>", { desc = "Clear Search" })
 
-vim.keymap.set("n", "<leader>s", ":split<CR>", { desc = "Horizontal Split" })
-vim.keymap.set("n", "<leader>v", ":vsplit<CR>", { desc = "Vertical Split" })
+vim.keymap.set("n", "<leader>-", ":split<CR>", { desc = "Horizontal Split" })
+vim.keymap.set("n", "<leader>|", ":vsplit<CR>", { desc = "Vertical Split" })
 
 -- Window Navigation
 -- Terminal Navigation
@@ -14,9 +15,6 @@ vim.keymap.set("t", "<C-h>", [[<C-\><C-n><C-w>h]], { desc = "Go to Left Window" 
 vim.keymap.set("t", "<C-j>", [[<C-\><C-n><C-w>j]], { desc = "Go to Lower Window" })
 vim.keymap.set("t", "<C-k>", [[<C-\><C-n><C-w>k]], { desc = "Go to Upper Window" })
 vim.keymap.set("t", "<C-l>", [[<C-\><C-n><C-w>l]], { desc = "Go to Right Window" })
-
-vim.keymap.set("n", "<leader>un", ":set number!<CR>", { desc = "Toggle number" })
-vim.keymap.set("n", "<leader>ur", ":set relativenumber!<CR>", { desc = "Toggle relative number" })
 
 -- Tab Navigation
 vim.keymap.set("n", "<leader>tn", ":tabnew<CR>", { desc = "New Tab" })
