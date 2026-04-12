@@ -4,4 +4,12 @@ vim.lsp.config("basedpyright", {
     capabilities = capabilities,
 })
 
+vim.lsp.config("slang_server", {
+    cmd = { "slang-server" },
+    filetypes = { "systemverilog", "verilog" },
+    root_markers = { ".git", "slang.json" },
+    capabilities = capabilities,
+})
+
 vim.lsp.enable("basedpyright")
+vim.lsp.enable("slang_server")

@@ -18,6 +18,11 @@ return {
     },
 
     {
+        "hudson-trading/slang-server.nvim",
+        opts = {},
+    },
+
+    {
         "mason-org/mason.nvim",
         config = function()
             require("mason").setup()
