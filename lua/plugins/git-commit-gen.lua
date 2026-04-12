@@ -1,6 +1,7 @@
 return {
     {
         "ezchi/cliproxyapi.nvim",
+        lazy = false, -- Load on startup to ensure server is ready
         dependencies = { "nvim-lua/plenary.nvim" },
         config = function()
             require("cliproxyapi").setup({
@@ -10,6 +11,7 @@ return {
     },
     {
         "ezchi/git-commit-gen.nvim",
+        lazy = false, -- Load on startup to register autocmd properly
         dependencies = { "ezchi/cliproxyapi.nvim" },
         config = function()
             require("git-commit-gen").setup({
