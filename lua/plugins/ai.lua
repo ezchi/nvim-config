@@ -151,34 +151,68 @@ Detailed Rules
 - Ensure there is **EXACTLY ONE blank line** after the body (before any footers or the end of the message).
 ]]
 
-                -- Run gemini CLI in headless mode asynchronously
-                local cmd = string.format("cat %s | gemini --prompt %s", tmp_file, vim.fn.shellescape(prompt_text))
+                -- Run cliproxyapi using curl for better performance
+                local api_url = "http://localhost:8317/v1/chat/completions"
+                local model = "gemini-2.5-flash-lite"
                 
-                local result_lines = {}
+                -- Construct the JSON payload for OpenAI-compatible API
+                local payload = {
+                    model = model,
+                    messages = {
+                        {
+                            role = "user",
+                            content = prompt_text .. "\n\nGit diff:\n" .. diff
+                        }
+                    },
+                    temperature = 0.2
+                }
+                
+                local json_payload = vim.fn.json_encode(payload)
+                local cmd = string.format(
+                    "curl -s -X POST -H 'Content-Type: application/json' -H 'Authorization: Bearer any-value' -d %s %s",
+                    vim.fn.shellescape(json_payload),
+                    vim.fn.shellescape(api_url)
+                )
+                
+                local stdout_lines = {}
                 vim.fn.jobstart(cmd, {
                     stdout_buffered = true,
                     on_stdout = function(_, data)
                         if data then
-                            -- Preserve empty lines, but remove trailing empty string added by jobstart
-                            if data[#data] == "" then table.remove(data) end
-                            vim.list_extend(result_lines, data)
+                            vim.list_extend(stdout_lines, data)
                         end
                     end,
                     on_exit = function(_, exit_code)
                         os.remove(tmp_file)
                         vim.schedule(function()
-                            if exit_code == 0 and #result_lines > 0 then
-                                if is_git_commit and vim.api.nvim_buf_is_valid(buf) then
-                                    vim.api.nvim_buf_set_lines(buf, 0, 1, false, result_lines)
+                            if exit_code == 0 and #stdout_lines > 0 then
+                                local response_text = table.concat(stdout_lines, "")
+                                local ok, decoded = pcall(vim.fn.json_decode, response_text)
+                                
+                                if ok and decoded and decoded.choices and decoded.choices[1] and decoded.choices[1].message then
+                                    local content = decoded.choices[1].message.content
+                                    -- Split content into lines and remove potential markdown code blocks
+                                    content = content:gsub("^```%a*\n", ""):gsub("\n```$", "")
+                                    local result_lines = vim.split(content, "\n")
+                                    
+                                    if is_git_commit and vim.api.nvim_buf_is_valid(buf) then
+                                        vim.api.nvim_buf_set_lines(buf, 0, -1, false, result_lines)
+                                    else
+                                        vim.api.nvim_put(result_lines, "l", true, true)
+                                    end
+                                    vim.notify("Commit message generated!", vim.log.levels.INFO)
                                 else
-                                    vim.api.nvim_put(result_lines, "l", true, true)
+                                    if is_git_commit and vim.api.nvim_buf_is_valid(buf) then
+                                        vim.api.nvim_buf_set_lines(buf, 0, 1, false, { "" })
+                                    end
+                                    vim.notify("Failed to parse API response.", vim.log.levels.ERROR)
+                                    if not ok then print("JSON Error: " .. decoded) end
                                 end
-                                vim.notify("Commit message generated!", vim.log.levels.INFO)
                             else
                                 if is_git_commit and vim.api.nvim_buf_is_valid(buf) then
                                     vim.api.nvim_buf_set_lines(buf, 0, 1, false, { "" })
                                 end
-                                vim.notify("Failed to generate commit message.", vim.log.levels.ERROR)
+                                vim.notify("Failed to generate commit message via API.", vim.log.levels.ERROR)
                             end
                         end)
                     end
