@@ -95,6 +95,7 @@ Append here; do not silently change an earlier entry.
 | D4 | 2026-08-10 | **Hand-rolled config, not a distro.** Steal from LazyVim's source; do not install LazyVim. | User wants to understand and learn the config. |
 | D5 | 2026-08-10 | **snacks.picker, not telescope.** | Both are currently installed; running two pickers is the main source of drift. snacks is already loaded and is the closest match to vertico+consult+embark. |
 | D6 | 2026-08-10 | **Emacs endgame is an org-only appliance** behind `emacsclient` + daemon, gated so the full config can be restored with an env var. Not deleted. | Insurance against a regressed phase. |
+| D7 | 2026-08-10 | **`H` / `L` keep Neovim's defaults** (screen top / bottom) on both sides. Drop the `evil-args` rebinding in Emacs rather than porting it to Neovim. | Enze has never knowingly used the argument-motion binding, so there is nothing to preserve. Matching the vim default aligns both editors at zero learning cost. Revisit via F1 if the motion turns out to be missed. |
 
 ---
 
@@ -133,7 +134,7 @@ Append here; do not silently change an earlier entry.
 | Key | Emacs binding | Neovim convention | Decision |
 |---|---|---|---|
 | `K` | `evil-jump-out-args` | hover docs | **hover on both**; move evil-args jump elsewhere |
-| `H` / `L` | `evil-forward-arg` / `evil-backward-arg` | screen top/bottom, or buffer prev/next | **UNDECIDED** — pick in Phase 1; `[b`/`]b` for buffers is the more common modern choice |
+| `H` / `L` | `evil-forward-arg` / `evil-backward-arg` | screen top/bottom | **Neovim default on both** (D7) — unbind in Emacs, add nothing in Neovim. Buffer switching goes on `[b` / `]b` instead |
 | `SPC w` | window prefix | window prefix | **window prefix**; this is the biggest muscle-memory hazard — `SPC w h` currently *saves* in Neovim |
 
 ---
@@ -183,7 +184,7 @@ Append here; do not silently change an earlier entry.
 - [ ] Add `SPC SPC`, `SPC ,`, `SPC f`, `SPC s`, `SPC h` mappings
 - [ ] Add `jk` → `<Esc>` in insert mode
 - [ ] Add `]e` / `[e` diagnostic navigation
-- [ ] Resolve the `H` / `L` decision and record it in §3
+- [ ] Add `[b` / `]b` buffer prev/next (leave `H` / `L` at their defaults — D7)
 - [ ] Delete `lua/plugins/neorg.lua` (D3)
 - [ ] Remove the Neorg-only `conceallevel` / `concealcursor` from `lua/config/options.lua`
 
@@ -192,7 +193,7 @@ Append here; do not silently change an earlier entry.
 - [ ] Move toggles `SPC t` → `SPC u`
 - [ ] Align grep on `SPC s g` in `lisp/my-completion.el`
 - [ ] Rebind `K` to hover/`helpful-at-point`; move `evil-jump-out-args` in `lisp/my-evil.el`
-- [ ] Apply the `H` / `L` decision
+- [ ] Unbind `H` / `L` from `evil-args` in `lisp/my-evil.el` (~line 468–471) so they fall back to the vim defaults (D7). Leave the `ia` / `aa` argument text objects alone — those are still useful
 - [ ] Move spell to native `zg` / `zw` in `lisp/my-spell.el`
 
 **Done when:** pressing `SPC` in both editors shows the same top-level menu.
@@ -416,4 +417,15 @@ One line per working session. Newest last.
 | Date | Phase | What happened |
 |---|---|---|
 | 2026-08-10 | — | Surveyed both configs; wrote this plan. Decisions D1–D6 locked. |
-| 2026-08-10 | 0 | Baseline done. Health triaged: only real finding is **zero treesitter parsers installed** (I1 confirmed, worse than expected). Two snacks "errors" proved to be headless artifacts — caveat added to §0. lazy-lock verified in sync (27/27). Emacs loads clean. Providers disabled. Next: **Phase 1**, and the `H`/`L` decision is still open. |
+| 2026-08-10 | 0 | Baseline done. Health triaged: only real finding is **zero treesitter parsers installed** (I1 confirmed, worse than expected). Two snacks "errors" proved to be headless artifacts — caveat added to §0. lazy-lock verified in sync (27/27). Emacs loads clean. Providers disabled. |
+| 2026-08-10 | 1 | `H` / `L` resolved as D7 — vim defaults on both sides, evil-args binding dropped. Logged F1 to revisit if missed. Phase 1 is unblocked. |
+
+---
+
+## 9. Follow-ups
+
+Deliberately deferred. Not blocking any phase; revisit when the trigger fires.
+
+| # | Item | Trigger to revisit | Raised |
+|---|---|---|---|
+| F1 | `H` / `L` argument motions (`evil-forward-arg` / `evil-backward-arg`) were dropped per D7. If you find yourself missing a "jump to next/previous function argument" motion, add it in Neovim via `nvim-treesitter-textobjects` (e.g. `]a` / `[a`) rather than re-taking `H` / `L`. | You reach for it and it isn't there | 2026-08-10 |
