@@ -13,8 +13,13 @@ return {
     picker = {
       enabled = true,
       sources = {
-        -- Where SPC p p goes looking. The default is ~/dev and ~/projects.
-        projects = { dev = { "~/Projects" } },
+        -- Where SPC p p goes looking. `dev` dirs are scanned two levels deep
+        -- for root markers; `projects` pins individual directories that live
+        -- outside them. Recently-opened git roots are added automatically.
+        projects = {
+          dev = { "~/Projects" },
+          projects = { "~/.config/nvim", "~/.emacs.d" },
+        },
       },
     },
     -- Replaces dired. A file tree you can edit, rather than a separate plugin.
