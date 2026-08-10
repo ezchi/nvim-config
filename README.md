@@ -2,6 +2,11 @@
 
 Neovim config.
 
+## Docs
+
+- **[docs/keymaps.md](docs/keymaps.md)** — every keybinding, with its Emacs counterpart.
+- **[docs/migration-plan.md](docs/migration-plan.md)** — migration status and decisions.
+
 ## Migrating from Emacs
 
 This config is being built out as a replacement for `~/.emacs.d`.

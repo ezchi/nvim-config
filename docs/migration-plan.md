@@ -107,6 +107,10 @@ Append here; do not silently change an earlier entry.
 
 **This table is the source of truth for both editors.** Phase 1 implements it.
 
+> For what is *actually bound today* — every key, not just the contract — see
+> **[keymaps.md](keymaps.md)**, generated from a live keymap dump. This table is the
+> target; that file is the state.
+
 | Key | Meaning | Emacs today | Neovim today | Action |
 |---|---|---|---|---|
 | `SPC SPC` | find file in project | `project-find-file` | — | add to nvim |
