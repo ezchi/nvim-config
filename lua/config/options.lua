@@ -10,9 +10,9 @@ vim.opt.cursorline = true
 -- Enable true color
 vim.opt.termguicolors = true
 
--- For Neorg
-vim.opt.conceallevel = 2
-vim.opt.concealcursor = "nc"
+-- Note: conceallevel/concealcursor used to be set globally here for Neorg. Neorg is
+-- gone (org lives in Emacs), and a global conceallevel hides quotes in JSON and
+-- markup in markdown. Plugins that want it set it per-filetype instead.
 
 -- Disable the remote-plugin providers we don't use. Nothing in this config needs
 -- them, and leaving them on makes :checkhealth report four warnings that drown out

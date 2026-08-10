@@ -66,7 +66,8 @@ Status values: `TODO` · `IN PROGRESS` · `DONE` · `SKIPPED`
 | # | Phase | Status | Date | Effort | Blocks |
 |---|---|---|---|---|---|
 | 0 | Baseline and guardrails | **DONE** | 2026-08-10 | 30 min | 1 |
-| 1 | **Keybinding contract** | TODO | | 1–2 h | everything |
+| 1 | **Keybinding contract** | **DONE** | 2026-08-10 | 1–2 h | everything |
+| 1b | Treesitter parsers | **DONE** | 2026-08-10 | 20 min | 3, 5 |
 | 2 | Core editing parity | TODO | | 1–2 h | — |
 | 3 | Finding and navigation | TODO | | 1–2 h | — |
 | 4 | Project and workspace | TODO | | 1 h | 6 |
@@ -95,6 +96,7 @@ Append here; do not silently change an earlier entry.
 | D4 | 2026-08-10 | **Hand-rolled config, not a distro.** Steal from LazyVim's source; do not install LazyVim. | User wants to understand and learn the config. |
 | D5 | 2026-08-10 | **snacks.picker, not telescope.** | Both are currently installed; running two pickers is the main source of drift. snacks is already loaded and is the closest match to vertico+consult+embark. |
 | D6 | 2026-08-10 | **Emacs endgame is an org-only appliance** behind `emacsclient` + daemon, gated so the full config can be restored with an env var. Not deleted. | Insurance against a regressed phase. |
+| D8 | 2026-08-10 | **Treesitter parser fix pulled forward from Phase 5 to a new Phase 1b.** | It degrades editing *today* (every language on regex highlighting), Phase 3 needs parsers for `picker.treesitter()` as the `consult-outline` replacement, and Phase 5 needs them for indent. ~20 min of work sitting behind four phases. |
 | D7 | 2026-08-10 | **`H` / `L` keep Neovim's defaults** (screen top / bottom) on both sides. Drop the `evil-args` rebinding in Emacs rather than porting it to Neovim. | Enze has never knowingly used the argument-motion binding, so there is nothing to preserve. Matching the vim default aligns both editors at zero learning cost. Revisit via F1 if the motion turns out to be missed. |
 
 ---
@@ -170,33 +172,61 @@ Append here; do not silently change an earlier entry.
 
 ---
 
-### Phase 1 — Keybinding contract · `TODO`
+### Phase 1 — Keybinding contract · `DONE` (2026-08-10)
 
-*Do this first. Everything else builds on it.*
+**Neovim side** — `lua/config/keymaps.lua` rewritten around §4
+- [x] All which-key groups declared in one place, with a header comment pointing at §4
+- [x] `<leader>w` → window prefix (`wh/wj/wk/wl/wp/ws/wv/wc/wd/wo/w=`); save moved to `<C-s>`
+- [x] `<leader>h` → help prefix; `nohlsearch` moved to `<Esc>`
+- [x] `<leader>t` (tabs) → `<leader><tab>`
+- [x] `<leader>x` (`:wq`) removed, reserved for trouble.nvim
+- [x] `<leader>q` → `<leader>qq` quit / `<leader>qQ` quit-all
+- [x] Added `SPC SPC`, `SPC ,`, `SPC /`, `SPC f`, `SPC s`, `SPC h`, `SPC b b`
+- [x] `jk` → `<Esc>` in insert mode
+- [x] `]e` / `[e` diagnostics via `vim.diagnostic.jump`
+- [x] `[b` / `]b` buffer prev/next (`H` / `L` untouched — D7)
+- [x] `lua/plugins/neorg.lua` deleted (D3) — `Lazy clean` removed 8 plugins, 27 → 19
+- [x] Global `conceallevel` / `concealcursor` removed from `options.lua`
 
-**Neovim side**
-- [ ] Rewrite `lua/config/keymaps.lua` around §4; declare *all* which-key groups in one place
-- [ ] `<leader>w` → window prefix (`wh/wj/wk/wl/wv/ws/wc/wo/w=`); save moves to `<C-s>`
-- [ ] `<leader>h` → help prefix; `nohlsearch` moves to `<Esc>`
-- [ ] `<leader>t` (tabs) → `<leader><tab>`
-- [ ] `<leader>x` (`:wq`) → removed, reserved for trouble.nvim
-- [ ] `<leader>q` → `<leader>qq` quit-all, prefix freed
-- [ ] Add `SPC SPC`, `SPC ,`, `SPC f`, `SPC s`, `SPC h` mappings
-- [ ] Add `jk` → `<Esc>` in insert mode
-- [ ] Add `]e` / `[e` diagnostic navigation
-- [ ] Add `[b` / `]b` buffer prev/next (leave `H` / `L` at their defaults — D7)
-- [ ] Delete `lua/plugins/neorg.lua` (D3)
-- [ ] Remove the Neorg-only `conceallevel` / `concealcursor` from `lua/config/options.lua`
+**Emacs side** — 14 edits, all verified applied
+- [x] `SPC a` ↔ `SPC A` swapped: AI is now `SPC a` (claude `a c`, gemini `a g`, codex `a x`, gptel `a t m`), applications moved to `SPC A` (calc, eshell, proced)
+- [x] Toggles `SPC t` → `SPC u` (`my-keybindings.el` d/r/w/F/M, `my-appearance.el` font, `my-spell.el` spell-fu)
+- [x] `SPC s g` = `consult-ripgrep` (project grep); `consult-git` moved to `SPC s V`. `SPC s r` kept as an alias so existing muscle memory still works
+- [x] `K` unbound from `evil-jump-out-args` — falls back to `evil-lookup-func`, already set to `helpful-at-point`
+- [x] `H` / `L` unbound from `evil-args` (D7); `ia` / `aa` argument text objects kept
+- [x] Spell `zg` / `zw` — **no-op, already correct.** They were on `general-nmap`, i.e. already the native vim keys, not under the leader
 
-**Emacs side**
-- [ ] Swap `SPC a` (applications) ↔ `SPC A` (AI) in `lisp/my-ai.el` + `lisp/my-packages.el` group table
-- [ ] Move toggles `SPC t` → `SPC u`
-- [ ] Align grep on `SPC s g` in `lisp/my-completion.el`
-- [ ] Rebind `K` to hover/`helpful-at-point`; move `evil-jump-out-args` in `lisp/my-evil.el`
-- [ ] Unbind `H` / `L` from `evil-args` in `lisp/my-evil.el` (~line 468–471) so they fall back to the vim defaults (D7). Leave the `ia` / `aa` argument text objects alone — those are still useful
-- [ ] Move spell to native `zg` / `zw` in `lisp/my-spell.el`
+**Notes for later**
+- `lisp/my-maybe.el` still binds `SPC a d d` (detached), but `init.el` never requires that
+  file. It is dead code — left alone deliberately.
+- Telescope is still the implementation behind `SPC SPC` / `SPC f` / `SPC s` / `SPC h`.
+  Phase 3 swaps in snacks.picker by changing only the right-hand side of those mappings;
+  the keys do not move again.
 
-**Done when:** pressing `SPC` in both editors shows the same top-level menu.
+**Verified:** `SPC wh` → "Go to left window", `<C-s>` → "Save file", `SPC sg` → "Grep
+project", `SPC <tab><tab>` → "New tab", old `SPC w` save mapping gone, `conceallevel` 0.
+Emacs config loads clean under `emacs --batch`.
+
+---
+
+### Phase 1b — Treesitter parsers · `DONE` (2026-08-10)
+
+Pulled forward from Phase 5 (D8). Fixes I1.
+
+- [x] Rewrite `lua/plugins/treesitter.lua` for the `main` branch API: `setup{}` +
+      `install()` for missing parsers only + `vim.treesitter.start()` in a FileType autocmd
+- [x] Set `indentexpr` to `v:lua.require'nvim-treesitter'.indentexpr()` per buffer
+- [x] Install parsers — **26 installed**, all with highlight and injection queries
+- [x] Verify a real buffer: `python` parser attached, highlighter active, indentexpr set
+
+**Parser-name gotchas found** (all three would have failed silently):
+- There is **no `verilog` parser** on `main` — it is `systemverilog`, which covers both.
+  This is the same substitution `~/.emacs.d/lisp/my-treesit.el` already makes.
+- `jinja`, not `jinja2`.
+- There is no `jsonc` parser; `json` handles both.
+- The old config's `"c++"` was never a valid name either (`cpp`).
+
+**Done when:** ✅ `:checkhealth nvim-treesitter` lists parsers under "Installed languages".
 
 ---
 
@@ -265,8 +295,7 @@ Target: **snacks.picker** replaces vertico + orderless + marginalia + consult + 
 
 You are already on Neovim's native `vim.lsp.config` API — this is gap-filling, not replacement.
 
-- [ ] **Fix treesitter** — `lua/plugins/treesitter.lua` uses the pre-`main` API. The lock file pins `nvim-treesitter` to branch `main`, where `setup()` accepts only `{ install_dir }`; `ensure_installed`, `highlight`, and `indent` are silently ignored. Also `"c++"` is not a parser name (`cpp` is). Migrate to `require("nvim-treesitter").install{...}` + `vim.treesitter.start()` via FileType autocmd
-- [ ] Match the parser list to Emacs `treesit-auto` (~15 grammars)
+- [x] ~~Fix treesitter, match the parser list to Emacs `treesit-auto`~~ — **moved to Phase 1b (D8), done**
 - [ ] `vim.diagnostic` config: signs, virtual text, float
 - [ ] `folke/trouble.nvim` on `SPC x`
 - [ ] `stevearc/conform.nvim` — replaces `eglot-format`, `python-black`, `verilog-ext` formatters, and `ws-butler`
@@ -397,16 +426,17 @@ Discovered 2026-08-10 while surveying. Each is assigned to a phase.
 
 | # | Issue | Phase | Done |
 |---|---|---|---|
-| I1 | `lua/plugins/treesitter.lua` uses the pre-`main` API against a `main`-pinned plugin — `ensure_installed`/`highlight`/`indent` are silently ignored; `"c++"` is not a valid parser name | 5 | [ ] |
-| I2 | `<leader>w` = save collides with the window prefix in both schemes | 1 | [ ] |
-| I3 | `<leader>h` = `nohlsearch` collides with the help prefix | 1 | [ ] |
-| I4 | `<leader>t` = tabs collides with the Emacs toggle prefix | 1 | [ ] |
-| I5 | which-key groups in `keymaps.lua` are stale — `<leader>w` labelled "File", `<leader>t` "Tabs"; several plugin-spec groups undeclared | 1 | [ ] |
+| I1 | `lua/plugins/treesitter.lua` uses the pre-`main` API against a `main`-pinned plugin — `ensure_installed`/`highlight`/`indent` are silently ignored; `"c++"` is not a valid parser name | ~~5~~ 1b | [x] |
+| I2 | `<leader>w` = save collides with the window prefix in both schemes | 1 | [x] |
+| I3 | `<leader>h` = `nohlsearch` collides with the help prefix | 1 | [x] |
+| I4 | `<leader>t` = tabs collides with the Emacs toggle prefix | 1 | [x] |
+| I5 | which-key groups in `keymaps.lua` are stale — `<leader>w` labelled "File", `<leader>t` "Tabs"; several plugin-spec groups undeclared | 1 | [x] |
 | I6 | Telescope and snacks.picker both installed | 3 | [ ] |
 | I7 | `lua/plugins/example.lua` holds unrelated specs; should be split | 10 | [ ] |
-| I8 | Neorg configured against `~/Projects/org-gtd/neorg/notes`, which is empty | 1 | [ ] |
+| I8 | Neorg configured against `~/Projects/org-gtd/neorg/notes`, which is empty | 1 | [x] |
 | I9 | `vim.highlight.on_yank` deprecated on 0.12 → `vim.hl.on_yank` | 5 | [ ] |
 | I10 | `vim.loop` in `lua/config/lazy.lua` deprecated → `vim.uv` | 5 | [ ] |
+| I11 | Full `:checkhealth` takes >3 min headless — mason's registry-api network call is the likely culprit. Use a targeted `:checkhealth lazy nvim-treesitter which-key vim.lsp vim.treesitter` as the phase gate instead | — | [ ] |
 
 ---
 
@@ -419,6 +449,7 @@ One line per working session. Newest last.
 | 2026-08-10 | — | Surveyed both configs; wrote this plan. Decisions D1–D6 locked. |
 | 2026-08-10 | 0 | Baseline done. Health triaged: only real finding is **zero treesitter parsers installed** (I1 confirmed, worse than expected). Two snacks "errors" proved to be headless artifacts — caveat added to §0. lazy-lock verified in sync (27/27). Emacs loads clean. Providers disabled. |
 | 2026-08-10 | 1 | `H` / `L` resolved as D7 — vim defaults on both sides, evil-args binding dropped. Logged F1 to revisit if missed. Phase 1 is unblocked. |
+| 2026-08-10 | 1 + 1b | **Both done.** Keymap contract implemented on both sides (12 Neovim items, 14 Emacs edits). Neorg removed, 27 → 19 plugins, which killed the luarocks/Lua 5.1 error. Treesitter rebuilt for the `main` API: 26 parsers installed, highlighter and indentexpr verified live in a real buffer. Targeted `:checkhealth` is **0 errors**, down from 3. Emacs loads clean. Next: **Phase 2** (editing parity) or **Phase 3** (snacks.picker) — independent, pick either. |
 
 ---
 
