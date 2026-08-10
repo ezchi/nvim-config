@@ -10,7 +10,6 @@
   "mason.nvim": { "branch": "main", "commit": "b03fb0f20bc1d43daf558cda981a2be22e73ac42" },
   "mini.ai": { "branch": "main", "commit": "25248c6aa002391936a6200f12d1466015987133" },
   "mini.align": { "branch": "main", "commit": "77d7446b9f2452193f13ced9fb73a8b3aa4a4f4d" },
-  "mini.trailspace": { "branch": "main", "commit": "82c4fb7d4336f8824ca6c97068932886b56326d0" },
   "neogit": { "branch": "master", "commit": "e06745228600a585b88726fc9fba44a373c15a47" },
   "nvim-lspconfig": { "branch": "master", "commit": "cb5bc0b2b35a6d513e3298d285db81453e791f4f" },
   "nvim-surround": { "branch": "main", "commit": "2e93e154de9ff326def6480a4358bfc149d5da2c" },

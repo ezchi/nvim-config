@@ -8,6 +8,8 @@
 --   * evil-mc             -> see follow-up F2; `gr` is now the builtin LSP prefix
 --   * undo-fu-session     -> 'undofile' in lua/config/options.lua covers persistence;
 --                            a tree visualiser is follow-up F4
+--   * ws-butler           -> conform.nvim in phase 5 handles trailing whitespace as
+--                            part of per-language formatting; follow-up F6
 return {
     -- evil-surround. ys/cs/ds, the vim-surround keys evil-surround emulates.
     {
@@ -49,20 +51,4 @@ return {
         opts = {},
     },
 
-    -- ws-butler, approximately. ws-butler trims only the lines you touched;
-    -- mini.trailspace trims the whole buffer, which makes noisy diffs on files
-    -- you did not write. So highlight always, trim only on request -- and let
-    -- the real formatters handle it per-language once conform lands in phase 5.
-    {
-        "nvim-mini/mini.trailspace",
-        event = "VeryLazy",
-        opts = {},
-        keys = {
-            {
-                "<leader>cw",
-                function() require("mini.trailspace").trim() end,
-                desc = "Trim trailing whitespace",
-            },
-        },
-    },
 }
