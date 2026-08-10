@@ -115,9 +115,34 @@ end, { desc = "Previous diagnostic" })
 -- Inside a picker: <C-q> sends the results to the quickfix list, which is how you
 -- get wgrep-style bulk editing — see `:cfdo` in the search/replace note below.
 
+-- Project root detection, replacing project.el. snacks.picker defaults to the
+-- plain working directory, so `SPC /` launched from ~ would grep your whole home
+-- directory. vim.fs.root() walks up for a marker, which is all project.el does.
+-- No plugin needed -- see decision D11.
+local root_markers = {
+    ".git",
+    "Makefile",
+    "pyproject.toml",
+    "compile_commands.json",
+    "slang.json",
+    ".envrc",
+}
+
+local function project_root()
+    return vim.fs.root(0, root_markers) or vim.uv.cwd()
+end
+
+-- Only sources that search a directory tree get a cwd. Everything else (lines,
+-- marks, registers, undo...) is buffer- or session-scoped and ignores it.
+local rooted = { files = true, grep = true, grep_word = true, explorer = true }
+
 local function pick(source, opts)
     return function()
-        Snacks.picker[source](opts)
+        local args = vim.deepcopy(opts or {})
+        if rooted[source] and args.cwd == nil then
+            args.cwd = project_root()
+        end
+        Snacks.picker[source](args)
     end
 end
 
@@ -159,8 +184,25 @@ map("n", "<leader>ha", pick("autocmds"), { desc = "Autocommands" })
 map("n", "<leader>hH", pick("highlights"), { desc = "Highlight groups" })
 
 -- ─── Project / session (SPC p) ───────────────────────────────────────────────
--- Replaced by proper project detection and persistence.nvim in phase 4.
+--
+-- Together these are the tabspaces equivalent: `SPC p p` picks a project, chdirs
+-- into it, and restores that project's session. Sessions are saved automatically
+-- on exit by persistence.nvim, so there is no "save session" key.
 
+map("n", "<leader>pp", pick("projects"), { desc = "Switch project" })
 map("n", "<leader>pd", ":tcd ", { desc = "Tab-local CWD" })
-map("n", "<leader>ps", "<cmd>mksession! .session.vim<CR>", { desc = "Save session" })
-map("n", "<leader>pl", "<cmd>source .session.vim<CR>", { desc = "Load session" })
+map("n", "<leader>pr", function()
+    vim.notify("Project root: " .. project_root())
+end, { desc = "Show project root" })
+map("n", "<leader>pl", function()
+    require("persistence").load()
+end, { desc = "Restore session for cwd" })
+map("n", "<leader>pL", function()
+    require("persistence").load({ last = true })
+end, { desc = "Restore last session" })
+map("n", "<leader>pS", function()
+    require("persistence").select()
+end, { desc = "Select session" })
+map("n", "<leader>pQ", function()
+    require("persistence").stop()
+end, { desc = "Don't save session on exit" })

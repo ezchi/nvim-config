@@ -70,7 +70,7 @@ Status values: `TODO` · `IN PROGRESS` · `DONE` · `SKIPPED`
 | 1b | Treesitter parsers | **DONE** | 2026-08-10 | 20 min | 3, 5 |
 | 2 | Core editing parity | **DONE** | 2026-08-10 | 1–2 h | — |
 | 3 | Finding and navigation | **DONE** | 2026-08-10 | 1–2 h | — |
-| 4 | Project and workspace | TODO | | 1 h | 6 |
+| 4 | Project and workspace | **DONE** | 2026-08-10 | 1 h | 6 |
 | 5 | LSP, diagnostics, format, lint | TODO | | 2 h | 6 |
 | 6 | Languages (one at a time) | TODO | | 30 min each | — |
 | 7 | Git | TODO | | 1 h | — |
@@ -96,6 +96,7 @@ Append here; do not silently change an earlier entry.
 | D4 | 2026-08-10 | **Hand-rolled config, not a distro.** Steal from LazyVim's source; do not install LazyVim. | User wants to understand and learn the config. |
 | D5 | 2026-08-10 | **snacks.picker, not telescope.** | Both are currently installed; running two pickers is the main source of drift. snacks is already loaded and is the closest match to vertico+consult+embark. |
 | D6 | 2026-08-10 | **Emacs endgame is an org-only appliance** behind `emacsclient` + daemon, gated so the full config can be restored with an env var. Not deleted. | Insurance against a regressed phase. |
+| D11 | 2026-08-10 | **Project root detection is `vim.fs.root()` in the `pick()` helper, not a plugin.** Marker list: `.git`, `Makefile`, `pyproject.toml`, `compile_commands.json`, `slang.json`, `.envrc`. | The gap was real — snacks.picker defaults to plain `uv.cwd()` — but `vim.fs.root()` does what `project.el` does in three lines. Only the picker was affected; LSP has its own `root_markers`, git tools ask git. |
 | D10 | 2026-08-10 | **Phase 3 adds no plugins.** `dired` → `Snacks.explorer` rather than `oil.nvim`; `wgrep`/`substitute` → the native `<C-q>` → quickfix → `:cfdo` flow rather than `grug-far.nvim`. | Both were already paid for: snacks is loaded and has an explorer source, and quickfix bulk-edit is built in. Consistent with the Phase 2 pattern of removing plugins that turned out to duplicate built-ins. `oil.nvim` is a genuinely different model (edit the directory as text) — worth revisiting only if `Snacks.explorer` annoys you. |
 | D9 | 2026-08-10 | **No LuaSnip.** Snippets are `friendly-snippets` + blink's default source, expanding through Neovim's built-in `vim.snippet`. Custom snippets go in `~/.config/nvim/snippets/` as VSCode JSON. | `~/.emacs.d/snippets/` turned out to be **empty** — there were no custom snippets to port, only the community packs, which `friendly-snippets` replaces directly. blink already defaults to `friendly_snippets = true`. Adding LuaSnip would be a dependency and a second snippet syntax bought for nothing. Revisit only if a snippet needs real logic. |
 | D8 | 2026-08-10 | **Treesitter parser fix pulled forward from Phase 5 to a new Phase 1b.** | It degrades editing *today* (every language on regex highlighting), Phase 3 needs parsers for `picker.treesitter()` as the `consult-outline` replacement, and Phase 5 needs them for indent. ~20 min of work sitting behind four phases. |
@@ -323,15 +324,47 @@ including the `regex` parser requirement, which Phase 1b had already installed.
 
 ---
 
-### Phase 4 — Project and workspace · `TODO`
+### Phase 4 — Project and workspace · `DONE` (2026-08-10)
 
-- [ ] Project root detection (snacks picker root detection, or `ahmedkhalf/project.nvim`)
-- [ ] `folke/persistence.nvim` for per-directory sessions — replaces the manual `.session.vim` mappings
-- [ ] `envrc` → `direnv/direnv.vim` (**needed before Phase 6** for Python venvs and toolchain paths)
-- [ ] Map `SPC <tab>` to mirror `tabspaces-command-map` (`.` switch/create, `[` recent, `]` next, `f` first, `l` last)
-- [ ] Keep `SPC p d` → `:tcd` (already correct)
+Rewritten before execution: the original plan assumed a root-detection plugin and a direnv
+plugin. Investigation showed both were already covered — see D11 and F8. **One plugin added.**
 
-**Done when:** opening Neovim in a project restores the layout and picks up `.envrc`.
+- [x] **Project root detection — no plugin.** `vim.fs.root()` with a marker list
+      (`.git`, `Makefile`, `pyproject.toml`, `compile_commands.json`, `slang.json`, `.envrc`)
+      inside the existing `pick()` helper in `keymaps.lua`. Applied only to the four
+      tree-searching sources (`files`, `grep`, `grep_word`, `explorer`); everything else is
+      buffer-scoped and ignores `cwd`
+- [x] `folke/persistence.nvim` for per-directory sessions, replacing the manual
+      `.session.vim` mappings (`SPC p s` / `SPC p l`)
+- [x] `SPC p p` → `Snacks.picker.projects()`, pointed at `~/Projects`. This is the
+      tabspaces equivalent: it chdirs into the project **and** calls
+      `require("persistence").load()` to restore that project's session — snacks looks the
+      plugin up by name, which is why persistence was the right choice over alternatives
+- [x] `SPC p r` shows the detected root, for when a picker searches somewhere surprising
+- [x] `envrc` → **no plugin (F8)**
+- [x] `SPC <tab>` tabspaces mirror — already done in Phase 1
+- [x] `SPC p d` → `:tcd` kept
+
+**Why no root-detection plugin:** `Snacks.picker.files()`/`grep()` default to `uv.cwd()`,
+with no root detection (only the `git.*` and `recent` sources use `Snacks.git.get_root()`).
+So the gap was real — `SPC /` launched from `~` would grep the whole home directory — but
+`vim.fs.root()` is a built-in that closes it in three lines. Nothing else was affected: LSP
+does its own detection via `root_markers`, and gitsigns/neogit ask git directly.
+
+**Why no direnv plugin:** `direnv` 2.37.1 is installed and `eval "$(direnv hook zsh)"` is
+already active in `~/.zshrc`, so any nvim launched from a project directory inherits the
+`.envrc` environment — and so do the LSP servers it spawns. There are 7 `.envrc` files
+across `~/Projects`. The only stale case is `:tcd` to a different project inside a running
+nvim, which the tmux-pane-per-project workflow makes rare. See F8.
+
+**Verified:** with cwd `~/Projects/org-gtd` and the open buffer in `~/Projects/dotfiles`,
+`vim.fs.root()` resolved to `~/Projects/dotfiles` — exactly the case where plain `cwd`
+would have been wrong. All 7 `SPC p` keys resolve; the old `SPC p s` is gone.
+
+**Not verified end-to-end:** that the picker *visibly* opens at the detected root, and the
+project → session round trip. Both need a real UI — do them as the "one real task" gate.
+
+**Done when:** `SPC p p` switches project and restores its layout.
 
 ---
 
@@ -493,6 +526,7 @@ One line per working session. Newest last.
 | 2026-08-10 | — | Surveyed both configs; wrote this plan. Decisions D1–D6 locked. |
 | 2026-08-10 | 0 | Baseline done. Health triaged: only real finding is **zero treesitter parsers installed** (I1 confirmed, worse than expected). Two snacks "errors" proved to be headless artifacts — caveat added to §0. lazy-lock verified in sync (27/27). Emacs loads clean. Providers disabled. |
 | 2026-08-10 | 1 | `H` / `L` resolved as D7 — vim defaults on both sides, evil-args binding dropped. Logged F1 to revisit if missed. Phase 1 is unblocked. |
+| 2026-08-10 | 4 | **Done, rewritten first.** Challenged the two plugin assumptions and both fell: root detection is `vim.fs.root()` in three lines (D11), and direnv is already handled by the zsh hook (F8). Only persistence.nvim added, 21 → 22 — and it earns its place because `Snacks.picker.projects()` looks it up **by name** to restore a project's session on switch, giving the tabspaces workflow. Next: **Phase 5** (LSP/format/lint), which also closes F6. |
 | 2026-08-10 | 3 | **Done, and it removed plugins instead of adding them** (23 → 21): telescope + fzf-native out, nothing in. `Snacks.explorer` covers dired and the native `<C-q>`/`:cfdo` flow covers wgrep, so neither oil.nvim nor grug-far was needed (D10, F7). Neogit moved to its native snacks integration. `vim.ui.select` now routes through the picker, closing a Phase 0 health warning. Next: **Phase 4** (project/workspace) — it blocks Phase 6 via direnv. |
 | 2026-08-10 | 2 | Trimmed on review: **undotree and friendly-snippets removed** as unused (F4, F5), 26 → 24 plugins. `undofile` and blink's snippet source stay — neither needed the plugin. |
 | 2026-08-10 | 2 | **mini.trailspace removed** as unused (F6), 24 → 23. Phase 5's conform is the better home for this anyway. Phase 2 settles at 4 added plugins: nvim-surround, flash, mini.ai, mini.align. |
@@ -507,6 +541,7 @@ Deliberately deferred. Not blocking any phase; revisit when the trigger fires.
 
 | # | Item | Trigger to revisit | Raised |
 |---|---|---|---|
+| F8 | No direnv integration inside Neovim. The zsh hook covers launch-time, so this only matters if you `:tcd` to a different project inside a running nvim — the env, and any LSP server already started, keep the old project's `.envrc`. Fix by restarting nvim in that project, or add `direnv/direnv.vim`. | You `:tcd` between projects and an LSP or tool picks up the wrong venv | 2026-08-10 |
 | F7 | No dedicated search-and-replace UI. `MagicDuck/grug-far.nvim` is the candidate; the native `<C-q>` → `:cfdo %s/old/new/g \| update` flow covers the same ground and was chosen instead (D10). | The quickfix flow gets tedious — e.g. you want a live preview of replacements before committing | 2026-08-10 |
 | F6 | No trailing-whitespace handling. `mini.trailspace` was installed in Phase 2 and removed the same day as unused. **Phase 5 should cover this**: conform.nvim trims trailing whitespace as part of per-language formatting, which is closer to ws-butler's intent than a whole-buffer trim anyway. Check it there before adding anything. | Phase 5, or you notice whitespace creeping into diffs | 2026-08-10 |
 | F4 | `mbbill/undotree` was installed in Phase 2 and removed the same day as unused. Persistent undo still works — that is `undofile`, not the plugin. Re-add only if you actually want to browse the undo *tree* (branches), which plain `u` / `<C-r>` cannot reach. | You lose work down an undo branch | 2026-08-10 |

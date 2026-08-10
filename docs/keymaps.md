@@ -109,11 +109,19 @@ Emacs also has `SPC c c` compile / `SPC c C` recompile — those land in **phase
 
 | Key | Mode | Action | Emacs |
 |---|---|---|---|
+| `SPC p p` | n | Switch project (chdir + restore its session) | `SPC TAB .` tabspaces-switch-or-create |
 | `SPC p d` | n | Tab-local cwd | |
-| `SPC p s` | n | Save session | tabspaces |
-| `SPC p l` | n | Load session | tabspaces |
+| `SPC p r` | n | Show detected project root | |
+| `SPC p l` | n | Restore session for cwd | |
+| `SPC p L` | n | Restore last session | |
+| `SPC p S` | n | Select a session | |
+| `SPC p Q` | n | Don't save session on exit | |
 
-Emacs binds the whole `project-prefix-map` here. Neovim parity is **phase 4**.
+Sessions save automatically on exit, so there is no "save session" key.
+
+Pickers that search a tree (`files`, `grep`, `grep_word`, `explorer`) are scoped to the
+project root found by `vim.fs.root()` — markers: `.git`, `Makefile`, `pyproject.toml`,
+`compile_commands.json`, `slang.json`, `.envrc`. Emacs does this via `project.el`.
 
 ## `SPC q` — Quit
 

@@ -10,7 +10,13 @@ return {
     input = { enabled = true },
     -- Replaces vertico + orderless + marginalia + consult + embark, and
     -- telescope. Enabling it also routes vim.ui.select through the picker.
-    picker = { enabled = true },
+    picker = {
+      enabled = true,
+      sources = {
+        -- Where SPC p p goes looking. The default is ~/dev and ~/projects.
+        projects = { dev = { "~/Projects" } },
+      },
+    },
     -- Replaces dired. A file tree you can edit, rather than a separate plugin.
     explorer = { enabled = true },
     notifier = {
