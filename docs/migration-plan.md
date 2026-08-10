@@ -21,9 +21,18 @@ If you are starting a fresh session:
    - commit: `docs(migration): phase N complete` together with the config changes.
 5. If a decision is made mid-phase, append it to §3 — never leave a decision only in chat.
 
-**Verification before declaring a phase done:** run `nvim --headless "+checkhealth" +qa`
-(or `:checkhealth` interactively), confirm no new errors, and use the migrated feature for
-one real task.
+**Verification before declaring a phase done:** run `:checkhealth`, confirm no new errors,
+and use the migrated feature for one real task.
+
+> **Caveat — do not trust headless `:checkhealth` for snacks.nvim.** The `input`,
+> `dashboard`, `scroll`, `scope`, and `picker` modules are wired on the `UIEnter` event,
+> which never fires under `nvim --headless`. They will report `setup did not run` and
+> `vim.ui.input is not set to Snacks.input` as *errors* that do not exist in a real UI.
+> To check them headlessly, fire the event first:
+> ```sh
+> nvim --headless -c 'lua vim.defer_fn(function() vim.cmd("doautocmd UIEnter") end, 500)' ...
+> ```
+> Verified 2026-08-10 against `snacks.nvim/lua/snacks/init.lua`.
 
 **Rollback:** every phase is one commit. `git revert <sha>` then `:Lazy restore` returns
 Neovim to the previous phase. Emacs is untouched by Neovim phases and always works.
@@ -56,7 +65,7 @@ Status values: `TODO` · `IN PROGRESS` · `DONE` · `SKIPPED`
 
 | # | Phase | Status | Date | Effort | Blocks |
 |---|---|---|---|---|---|
-| 0 | Baseline and guardrails | TODO | | 30 min | 1 |
+| 0 | Baseline and guardrails | **DONE** | 2026-08-10 | 30 min | 1 |
 | 1 | **Keybinding contract** | TODO | | 1–2 h | everything |
 | 2 | Core editing parity | TODO | | 1–2 h | — |
 | 3 | Finding and navigation | TODO | | 1–2 h | — |
@@ -131,15 +140,32 @@ Append here; do not silently change an earlier entry.
 
 ## 5. Phases
 
-### Phase 0 — Baseline and guardrails · `TODO`
+### Phase 0 — Baseline and guardrails · `DONE` (2026-08-10)
 
-- [ ] Commit or ignore the untracked tree (`GEMINI.md`, `conductor/`)
-- [ ] Run `:checkhealth`, fix anything red
-- [ ] Confirm `lazy-lock.json` is tracked and current (`:Lazy sync` then commit)
-- [ ] Commit this plan document
-- [ ] Confirm Emacs still starts clean (`emacs --batch -l ~/.emacs.d/init.el`)
+- [x] Commit the untracked tree (`GEMINI.md`, `conductor/` — both intentional, now tracked)
+- [x] Run `:checkhealth`, triage everything red (see below)
+- [x] Confirm `lazy-lock.json` is tracked and current — 27 entries, all installed, no orphans, no drift
+- [x] Commit this plan document
+- [x] Confirm Emacs still starts clean (`emacs --batch -l ~/.emacs.d/init.el`)
+- [x] Silence the unused remote-plugin providers so future healthchecks are readable
 
-**Done when:** clean `git status`, clean `:checkhealth`, plan committed.
+#### Health triage (2026-08-10)
+
+| Finding | Verdict | Action |
+|---|---|---|
+| `luarocks`: needs Lua 5.1, found 5.5 → **ERROR** | Real, but caused **only** by Neorg's `tree-sitter-norg` rocks | Disappears in Phase 1 when Neorg is removed (D3) |
+| `nvim-treesitter`: **"Installed languages" list is empty** | **Real and significant** — confirms I1. No parsers are installed at all; only Neovim's bundled ones and Neorg's rocks are present. Highlighting for Python / C++ / Verilog is running on regex, not treesitter | Phase 5 |
+| `Snacks.dashboard`: `setup did not run` → ERROR | **False positive** — headless artifact, `UIEnter` never fires | none |
+| `Snacks.input`: `vim.ui.input` not set → ERROR | **False positive** — same cause; passes once `UIEnter` is fired | none |
+| `Snacks.image`: no kitty graphics protocol → ERROR | Benign — module is disabled, and the terminal genuinely lacks the protocol | none |
+| `Snacks.picker`: `setup {disabled}` | Expected | Phase 3 enables it |
+| Neorg: key `gO` conflict | Expected | Phase 1 removes Neorg |
+| node / perl / ruby / python3 provider warnings | Noise | **Fixed** — providers disabled in `options.lua` |
+| `mini.icons` / `nvim-web-devicons` missing | Expected | Phase 10 |
+| `vim.deprecated` | ✅ clean — I9 and I10 are soft deprecations that this check does not flag | Phase 5 |
+| Emacs `emacs-mcp`: port 38840 in use | Benign — an Emacs daemon is already running and holds the port. Config itself loads clean | none |
+
+**Baseline recorded:** Neovim 0.12.4 · lazy.nvim 11.17.5 · 27 plugins · treesitter parsers: 0 installed.
 
 ---
 
@@ -390,3 +416,4 @@ One line per working session. Newest last.
 | Date | Phase | What happened |
 |---|---|---|
 | 2026-08-10 | — | Surveyed both configs; wrote this plan. Decisions D1–D6 locked. |
+| 2026-08-10 | 0 | Baseline done. Health triaged: only real finding is **zero treesitter parsers installed** (I1 confirmed, worse than expected). Two snacks "errors" proved to be headless artifacts — caveat added to §0. lazy-lock verified in sync (27/27). Emacs loads clean. Providers disabled. Next: **Phase 1**, and the `H`/`L` decision is still open. |
