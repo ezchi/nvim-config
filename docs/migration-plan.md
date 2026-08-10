@@ -96,6 +96,7 @@ Append here; do not silently change an earlier entry.
 | D4 | 2026-08-10 | **Hand-rolled config, not a distro.** Steal from LazyVim's source; do not install LazyVim. | User wants to understand and learn the config. |
 | D5 | 2026-08-10 | **snacks.picker, not telescope.** | Both are currently installed; running two pickers is the main source of drift. snacks is already loaded and is the closest match to vertico+consult+embark. |
 | D6 | 2026-08-10 | **Emacs endgame is an org-only appliance** behind `emacsclient` + daemon, gated so the full config can be restored with an env var. Not deleted. | Insurance against a regressed phase. |
+| D14 | 2026-08-11 | **No linter plugin.** SystemVerilog linting is `slang-server`; shell linting is `bash-language-server`'s built-in shellcheck. `nvim-lint` installed in Phase 6 and removed the same day. | Enze chose slang over verible, and slang-server *is* slang — measured, the CLI reports the same findings the server already does, so both together double every warning. bashls likewise already runs shellcheck. Re-add nvim-lint only for the `[-Wflag-name]` suffix the CLI prints and the server omits. |
 | D13 | 2026-08-11 | **`mason-lspconfig` `automatic_enable = false`.** Language servers are enabled explicitly in `lua/config/lsp.lua`. | Left on, it enables every mason package that happens to have an lspconfig entry. Installing `stylua` as a *formatter* silently started `stylua --lsp` as a *server*, competing with conform. Explicit enabling means installing a tool never changes editor behaviour by surprise. |
 | D12 | 2026-08-11 | **No trouble.nvim and no nvim-lint (yet).** Diagnostic lists use `Snacks.picker.diagnostics` / `diagnostics_buffer` / `qflist` / `loclist` on `SPC x`. Linting is deferred to Phase 6, per language. | `Snacks.picker.diagnostics()` already gives a filterable, previewable diagnostic list, and quickfix is where results want to end up. trouble's real edge is a *persistent* split — add it if you miss that. For linting: every language configured today (Python, C/C++, SystemVerilog) gets diagnostics from its LSP, so nvim-lint would sit idle. The two standalone linters on this machine, `shellcheck` and `verible-verilog-lint`, belong to specific languages — wire them where those languages are set up. |
 | D11 | 2026-08-10 | **Project root detection is `vim.fs.root()` in the `pick()` helper, not a plugin.** Marker list: `.git`, `Makefile`, `pyproject.toml`, `compile_commands.json`, `slang.json`, `.envrc`. | The gap was real — snacks.picker defaults to plain `uv.cwd()` — but `vim.fs.root()` does what `project.el` does in three lines. Only the picker was affected; LSP has its own `root_markers`, git tools ask git. |
@@ -452,14 +453,22 @@ to be unused.
 sorting from the other. Together they replace `pylint` + flymake, which is why Python needs
 no nvim-lint entry.
 
-**Linting (`nvim-lint`, the D12 deferral now resolved):** only two filetypes need it, since
-everything else gets diagnostics from a language server.
+**Linting: no linter plugin at all.** The Phase 5 deferral (D12) resolved to "not needed" —
+see D14. Both candidate linters were already covered:
 
-- `shellcheck` for sh/bash — 126 files
-- `verible` for verilog/systemverilog — **custom linter definition**, because nvim-lint
-  ships `slang`, `verilator` and `ghdl` but *not* verible. verible checks style (naming,
-  formatting conventions); slang-server checks elaboration and semantics. Verified both
-  appear simultaneously on one buffer under separate namespaces, so they do not overlap.
+- **SystemVerilog** — you chose slang over verible, and `slang-server` *is* slang. Measured
+  on a real 2 KB `.sv` file: 16 diagnostics from the LSP, 17 from `slang -Weverything` via
+  nvim-lint, 7 byte-identical. Diffing the rest showed they were the *same* findings — the
+  CLI just appends the flag name (`unused parameter 's' [-Wunused-parameter]`) and offsets
+  columns slightly. Running both would double every warning. The CLI also lints one file in
+  isolation, while the server has the indexed workspace.
+- **sh/bash** — `bash-language-server` runs shellcheck itself and reports the results.
+  Verified: a `[ $1 == "x" ]` quoting warning arrives under `ns=nvim.lsp.bashls`, with no
+  linter plugin installed.
+
+Passing `-Weverything` to slang-server was tried three ways — LSP `settings`,
+`init_options`, and a workspace `slang.json` with `{"flags": "-Weverything"}` — and the
+count stayed at 16 in every case, so the server already reports at that level.
 
 **Three things verification caught that would have failed silently:**
 
@@ -469,10 +478,12 @@ everything else gets diagnostics from a language server.
    formatter in Phase 5 silently started it as a server competing with conform. Fixed with
    `automatic_enable = false`; servers are enabled explicitly in `lua/config/lsp.lua`. See D13.
 2. **`nvim-lint` has no `verible_verilog_lint` linter.** The name from the original plan
-   does not exist, so the config would have been a no-op.
-3. **verible writes to stderr, not stdout.** With `stream = "stdout"` the linter ran and
+   does not exist, so the config would have been a no-op. (Moot now — verible was replaced
+   by slang, then nvim-lint removed entirely.)
+3. **verible wrote to stderr, not stdout.** With `stream = "stdout"` the linter ran and
    parsed nothing. Only caught by checking diagnostic *namespaces* — a `vim.diagnostic.get()`
-   count looked like success because slang-server's diagnostic was sitting in the buffer.
+   count looked like success because slang-server's diagnostic was already in the buffer.
+   The same namespace technique is what later exposed the slang double-reporting.
 
 **Filetype check that turned out fine:** `vim.filetype.match()` on a bare `.v` filename
 returns `v` (the V language), which would have broken 1885 files. On real content Neovim
@@ -603,6 +614,7 @@ One line per working session. Newest last.
 | 2026-08-10 | — | Surveyed both configs; wrote this plan. Decisions D1–D6 locked. |
 | 2026-08-10 | 0 | Baseline done. Health triaged: only real finding is **zero treesitter parsers installed** (I1 confirmed, worse than expected). Two snacks "errors" proved to be headless artifacts — caveat added to §0. lazy-lock verified in sync (27/27). Emacs loads clean. Providers disabled. |
 | 2026-08-10 | 1 | `H` / `L` resolved as D7 — vim defaults on both sides, evil-args binding dropped. Logged F1 to revisit if missed. Phase 1 is unblocked. |
+| 2026-08-11 | 6 | Verilog linting switched from verible to **slang** at Enze's request — which then made the linter plugin redundant, since slang-server is slang. Measured the overlap, found the CLI re-reports what the LSP already gives, and confirmed bashls runs shellcheck on its own. **nvim-lint removed, 25 → 24** (D14). |
 | 2026-08-11 | 6 | **Done, scoped by file counts rather than by the Emacs module list** — Go (0 files, no toolchain), Rust (1) and VHDL (1) dropped. 8 languages wired, each verified attaching to a real file. 2 plugins (lazydev, nvim-lint), 23 → 25. Verification caught three silent failures: stylua running as an LSP (D13), a linter name that does not exist, and verible writing to stderr. Next: **Phase 7** (git) — neogit is already installed, mostly needs diffview and learning. |
 | 2026-08-11 | 5 | **Done.** One plugin added (conform), 22 → 23. trouble.nvim and nvim-lint both declined (D12): the picker already lists diagnostics, and every configured language gets them from its LSP. Formatters verified end-to-end for lua/python/plain-text rather than just loaded. **F6 closed** by conform's `trim_whitespace`. I9 and I10 deprecations fixed; `:checkhealth vim.deprecated` clean. Next: **Phase 6** (languages), which also picks up mason tool declarations and per-language linters. |
 | 2026-08-10 | 4 | **Done, rewritten first.** Challenged the two plugin assumptions and both fell: root detection is `vim.fs.root()` in three lines (D11), and direnv is already handled by the zsh hook (F8). Only persistence.nvim added, 21 → 22 — and it earns its place because `Snacks.picker.projects()` looks it up **by name** to restore a project's session on switch, giving the tabspaces workflow. Next: **Phase 5** (LSP/format/lint), which also closes F6. |

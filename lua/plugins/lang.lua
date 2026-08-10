@@ -4,6 +4,21 @@
 -- phase 6). SystemVerilog/Verilog dominates at ~2200 files, then markdown, C/C++,
 -- Python and shell. Go has zero files and no toolchain, Rust and VHDL one file
 -- each -- none of those are configured.
+--
+-- There is no linter plugin here. Every language in use gets its diagnostics
+-- from a language server, and the two standalone linters on this machine are
+-- already covered:
+--
+--   * SystemVerilog -- slang-server IS slang. Running `slang -Weverything`
+--     separately reports the same warnings a second time; measured on a real
+--     file, 16 LSP diagnostics vs 17 CLI, and the "differences" were the same
+--     messages with the flag name appended. It also sees one file in isolation
+--     rather than the indexed workspace.
+--   * sh/bash -- bash-language-server runs shellcheck itself and reports the
+--     results, verified.
+--
+-- See D14. If you ever want the `[-Wflag-name]` suffix that the CLI prints and
+-- the server omits, that is the one reason to add nvim-lint back.
 return {
     -- Neovim API types for lua_ls. Only worth having because this config is
     -- itself the Lua you edit; it makes `vim.*` complete and stops the
@@ -16,52 +31,5 @@ return {
                 { path = "${3rd}/luv/library", words = { "vim%.uv" } },
             },
         },
-    },
-
-    -- Linters that have no language server. Everything else gets its
-    -- diagnostics from LSP, which is why this is a short list -- see D12.
-    {
-        "mfussenegger/nvim-lint",
-        event = { "BufReadPost", "BufWritePost" },
-        config = function()
-            local lint = require("lint")
-
-            -- nvim-lint ships slang, verilator and ghdl, but no verible, so
-            -- define it. verible is the style checker -- naming, formatting
-            -- conventions -- which is exactly what slang-server does NOT do,
-            -- so the two do not overlap.
-            --
-            -- Output: `file.sv:1:8-15: message [Style: file-names] [rule-name]`
-            lint.linters.verible = {
-                cmd = "verible-verilog-lint",
-                stdin = false,
-                args = {},
-                append_fname = true,
-                stream = "stderr", -- verible writes diagnostics to stderr, not stdout
-                ignore_exitcode = true, -- exits 1 whenever it finds anything
-                parser = require("lint.parser").from_pattern(
-                    "([^:]+):(%d+):(%d+)[%-%d]*:%s*(.+)",
-                    { "file", "lnum", "col", "message" },
-                    nil,
-                    { source = "verible", severity = vim.diagnostic.severity.WARN }
-                ),
-            }
-
-            lint.linters_by_ft = {
-                verilog = { "verible" },
-                systemverilog = { "verible" },
-                sh = { "shellcheck" },
-                bash = { "shellcheck" },
-            }
-
-            -- Lint on read and write rather than on every keystroke: verible
-            -- shells out per file and this is a 2000-file codebase.
-            vim.api.nvim_create_autocmd({ "BufReadPost", "BufWritePost", "InsertLeave" }, {
-                group = vim.api.nvim_create_augroup("nvim_lint", { clear = true }),
-                callback = function()
-                    lint.try_lint(nil, { ignore_errors = true })
-                end,
-            })
-        end,
     },
 }
