@@ -71,7 +71,7 @@ Status values: `TODO` · `IN PROGRESS` · `DONE` · `SKIPPED`
 | 2 | Core editing parity | **DONE** | 2026-08-10 | 1–2 h | — |
 | 3 | Finding and navigation | **DONE** | 2026-08-10 | 1–2 h | — |
 | 4 | Project and workspace | **DONE** | 2026-08-10 | 1 h | 6 |
-| 5 | LSP, diagnostics, format, lint | TODO | | 2 h | 6 |
+| 5 | LSP, diagnostics, format, lint | **DONE** | 2026-08-11 | 2 h | 6 |
 | 6 | Languages (one at a time) | TODO | | 30 min each | — |
 | 7 | Git | TODO | | 1 h | — |
 | 8 | Terminal, build, run | TODO | | 1 h | — |
@@ -96,6 +96,7 @@ Append here; do not silently change an earlier entry.
 | D4 | 2026-08-10 | **Hand-rolled config, not a distro.** Steal from LazyVim's source; do not install LazyVim. | User wants to understand and learn the config. |
 | D5 | 2026-08-10 | **snacks.picker, not telescope.** | Both are currently installed; running two pickers is the main source of drift. snacks is already loaded and is the closest match to vertico+consult+embark. |
 | D6 | 2026-08-10 | **Emacs endgame is an org-only appliance** behind `emacsclient` + daemon, gated so the full config can be restored with an env var. Not deleted. | Insurance against a regressed phase. |
+| D12 | 2026-08-11 | **No trouble.nvim and no nvim-lint (yet).** Diagnostic lists use `Snacks.picker.diagnostics` / `diagnostics_buffer` / `qflist` / `loclist` on `SPC x`. Linting is deferred to Phase 6, per language. | `Snacks.picker.diagnostics()` already gives a filterable, previewable diagnostic list, and quickfix is where results want to end up. trouble's real edge is a *persistent* split — add it if you miss that. For linting: every language configured today (Python, C/C++, SystemVerilog) gets diagnostics from its LSP, so nvim-lint would sit idle. The two standalone linters on this machine, `shellcheck` and `verible-verilog-lint`, belong to specific languages — wire them where those languages are set up. |
 | D11 | 2026-08-10 | **Project root detection is `vim.fs.root()` in the `pick()` helper, not a plugin.** Marker list: `.git`, `Makefile`, `pyproject.toml`, `compile_commands.json`, `slang.json`, `.envrc`. | The gap was real — snacks.picker defaults to plain `uv.cwd()` — but `vim.fs.root()` does what `project.el` does in three lines. Only the picker was affected; LSP has its own `root_markers`, git tools ask git. |
 | D10 | 2026-08-10 | **Phase 3 adds no plugins.** `dired` → `Snacks.explorer` rather than `oil.nvim`; `wgrep`/`substitute` → the native `<C-q>` → quickfix → `:cfdo` flow rather than `grug-far.nvim`. | Both were already paid for: snacks is loaded and has an explorer source, and quickfix bulk-edit is built in. Consistent with the Phase 2 pattern of removing plugins that turned out to duplicate built-ins. `oil.nvim` is a genuinely different model (edit the directory as text) — worth revisiting only if `Snacks.explorer` annoys you. |
 | D9 | 2026-08-10 | **No LuaSnip.** Snippets are `friendly-snippets` + blink's default source, expanding through Neovim's built-in `vim.snippet`. Custom snippets go in `~/.config/nvim/snippets/` as VSCode JSON. | `~/.emacs.d/snippets/` turned out to be **empty** — there were no custom snippets to port, only the community packs, which `friendly-snippets` replaces directly. blink already defaults to `friendly_snippets = true`. Adding LuaSnip would be a dependency and a second snippet syntax bought for nothing. Revisit only if a snippet needs real logic. |
@@ -377,15 +378,40 @@ project → session round trip. Both need a real UI — do them as the "one real
 You are already on Neovim's native `vim.lsp.config` API — this is gap-filling, not replacement.
 
 - [x] ~~Fix treesitter, match the parser list to Emacs `treesit-auto`~~ — **moved to Phase 1b (D8), done**
-- [ ] `vim.diagnostic` config: signs, virtual text, float
-- [ ] `folke/trouble.nvim` on `SPC x`
-- [ ] `stevearc/conform.nvim` — replaces `eglot-format`, `python-black`, `verilog-ext` formatters, and `ws-butler` (**closes F6** — confirm trailing whitespace is actually handled)
-- [ ] `mfussenegger/nvim-lint` — replaces `pylint` + flymake backends
-- [ ] Add the LuaSnip source to `blink.cmp` (after Phase 2)
-- [ ] Extend mason `ensure_installed` to cover every Phase 6 language
-- [ ] Fix deprecation: `vim.highlight.on_yank` → `vim.hl.on_yank` in `lua/config/autocmds.lua`
+- [x] `vim.diagnostic` config: signs, severity sort, inline text for WARN and above only, rounded float
+- [x] ~~`folke/trouble.nvim` on `SPC x`~~ — **not added, see D12.** `SPC x x` / `x X` / `x q` / `x l` use the picker
+- [x] `stevearc/conform.nvim` — replaces `eglot-format`, `python-black`, and `ws-butler`. **Closes F6**
+- [ ] ~~`mfussenegger/nvim-lint`~~ — **deferred to Phase 6 (D12).** LSP already supplies diagnostics for every language currently configured
+- [x] ~~LuaSnip source for `blink.cmp`~~ — N/A, superseded by D9
+- [ ] Extend mason `ensure_installed` to cover every Phase 6 language — deferred to Phase 6, where the languages are
+- [x] Fix deprecations I9 (`vim.highlight.on_yank` → `vim.hl.on_yank`) and I10 (`vim.loop` → `vim.uv`)
 
-**Done when:** format-on-save works, diagnostics render, `SPC c a` works in Python and C++.
+**Formatters wired** (only ones actually installed — conform skips a missing binary, but
+listing aspirational tools would hide that a filetype has none):
+
+| Filetype | Formatter | Source |
+|---|---|---|
+| python | `ruff_organize_imports`, `ruff_format` | `~/.local/bin/ruff` — replaces `python-black`; ruff's formatter is black-compatible |
+| c, cpp | `clang-format` | homebrew |
+| systemverilog, verilog | `verible_verilog_format` | `~/.local/bin` |
+| toml | `taplo` | cargo |
+| lua | `stylua` | installed via `:MasonInstall` during this phase |
+| sh, bash | `shfmt` | installed via `:MasonInstall` during this phase |
+| *everything else* | `trim_whitespace` | conform built-in — this is what closes F6 |
+
+**Format-on-save is off by default**, toggled with `SPC u f` (global) or `SPC u F` (buffer).
+Same reasoning that removed mini.trailspace: silently rewriting a file you only opened to
+read produces noisy diffs. `SPC c f` formats on demand and mirrors Emacs' `SPC c f`.
+
+**Verified end-to-end**, not just loaded: `stylua` normalised `local  x   =  1`, `ruff`
+reformatted `def  f( a,b )`, and a plain `.txt` file had its trailing whitespace stripped by
+the `_` fallback. `:checkhealth vim.deprecated` is clean.
+
+**Note for a fresh machine:** `stylua` and `shfmt` came from `:MasonInstall stylua shfmt`.
+mason-lspconfig's `ensure_installed` only covers LSP servers, so these two are not yet
+declared anywhere. Either run that command again or revisit in Phase 6.
+
+**Done when:** ✅ formatting works on demand, diagnostics render, `SPC x x` lists them.
 
 ---
 
@@ -515,8 +541,8 @@ Discovered 2026-08-10 while surveying. Each is assigned to a phase.
 | I6 | Telescope and snacks.picker both installed | 3 | [x] |
 | I7 | `lua/plugins/example.lua` holds unrelated specs; should be split | 10 | [ ] partly — telescope removed in Phase 3, so it is down to which-key + plenary. Still wants renaming |
 | I8 | Neorg configured against `~/Projects/org-gtd/neorg/notes`, which is empty | 1 | [x] |
-| I9 | `vim.highlight.on_yank` deprecated on 0.12 → `vim.hl.on_yank` | 5 | [ ] |
-| I10 | `vim.loop` in `lua/config/lazy.lua` deprecated → `vim.uv` | 5 | [ ] |
+| I9 | `vim.highlight.on_yank` deprecated on 0.12 → `vim.hl.on_yank` | 5 | [x] |
+| I10 | `vim.loop` in `lua/config/lazy.lua` deprecated → `vim.uv` | 5 | [x] |
 | I11 | Full `:checkhealth` takes >3 min headless — mason's registry-api network call is the likely culprit. Use a targeted `:checkhealth lazy nvim-treesitter which-key vim.lsp vim.treesitter` as the phase gate instead | — | [ ] |
 
 ---
@@ -530,6 +556,7 @@ One line per working session. Newest last.
 | 2026-08-10 | — | Surveyed both configs; wrote this plan. Decisions D1–D6 locked. |
 | 2026-08-10 | 0 | Baseline done. Health triaged: only real finding is **zero treesitter parsers installed** (I1 confirmed, worse than expected). Two snacks "errors" proved to be headless artifacts — caveat added to §0. lazy-lock verified in sync (27/27). Emacs loads clean. Providers disabled. |
 | 2026-08-10 | 1 | `H` / `L` resolved as D7 — vim defaults on both sides, evil-args binding dropped. Logged F1 to revisit if missed. Phase 1 is unblocked. |
+| 2026-08-11 | 5 | **Done.** One plugin added (conform), 22 → 23. trouble.nvim and nvim-lint both declined (D12): the picker already lists diagnostics, and every configured language gets them from its LSP. Formatters verified end-to-end for lua/python/plain-text rather than just loaded. **F6 closed** by conform's `trim_whitespace`. I9 and I10 deprecations fixed; `:checkhealth vim.deprecated` clean. Next: **Phase 6** (languages), which also picks up mason tool declarations and per-language linters. |
 | 2026-08-10 | 4 | **Done, rewritten first.** Challenged the two plugin assumptions and both fell: root detection is `vim.fs.root()` in three lines (D11), and direnv is already handled by the zsh hook (F8). Only persistence.nvim added, 21 → 22 — and it earns its place because `Snacks.picker.projects()` looks it up **by name** to restore a project's session on switch, giving the tabspaces workflow. Next: **Phase 5** (LSP/format/lint), which also closes F6. |
 | 2026-08-10 | 3 | **Done, and it removed plugins instead of adding them** (23 → 21): telescope + fzf-native out, nothing in. `Snacks.explorer` covers dired and the native `<C-q>`/`:cfdo` flow covers wgrep, so neither oil.nvim nor grug-far was needed (D10, F7). Neogit moved to its native snacks integration. `vim.ui.select` now routes through the picker, closing a Phase 0 health warning. Next: **Phase 4** (project/workspace) — it blocks Phase 6 via direnv. |
 | 2026-08-10 | 2 | Trimmed on review: **undotree and friendly-snippets removed** as unused (F4, F5), 26 → 24 plugins. `undofile` and blink's snippet source stay — neither needed the plugin. |
@@ -547,7 +574,7 @@ Deliberately deferred. Not blocking any phase; revisit when the trigger fires.
 |---|---|---|---|
 | F8 | No direnv integration inside Neovim. The zsh hook covers launch-time, so this only matters if you `:tcd` to a different project inside a running nvim — the env, and any LSP server already started, keep the old project's `.envrc`. Fix by restarting nvim in that project, or add `direnv/direnv.vim`. | You `:tcd` between projects and an LSP or tool picks up the wrong venv | 2026-08-10 |
 | F7 | No dedicated search-and-replace UI. `MagicDuck/grug-far.nvim` is the candidate; the native `<C-q>` → `:cfdo %s/old/new/g \| update` flow covers the same ground and was chosen instead (D10). | The quickfix flow gets tedious — e.g. you want a live preview of replacements before committing | 2026-08-10 |
-| F6 | No trailing-whitespace handling. `mini.trailspace` was installed in Phase 2 and removed the same day as unused. **Phase 5 should cover this**: conform.nvim trims trailing whitespace as part of per-language formatting, which is closer to ws-butler's intent than a whole-buffer trim anyway. Check it there before adding anything. | Phase 5, or you notice whitespace creeping into diffs | 2026-08-10 |
+| F6 | ~~**CLOSED in Phase 5**~~ — conform's `trim_whitespace` runs as the `_` fallback for every filetype without a real formatter, verified on a plain `.txt`. Original note: No trailing-whitespace handling. `mini.trailspace` was installed in Phase 2 and removed the same day as unused. **Phase 5 should cover this**: conform.nvim trims trailing whitespace as part of per-language formatting, which is closer to ws-butler's intent than a whole-buffer trim anyway. Check it there before adding anything. | Phase 5, or you notice whitespace creeping into diffs | 2026-08-10 |
 | F4 | `mbbill/undotree` was installed in Phase 2 and removed the same day as unused. Persistent undo still works — that is `undofile`, not the plugin. Re-add only if you actually want to browse the undo *tree* (branches), which plain `u` / `<C-r>` cannot reach. | You lose work down an undo branch | 2026-08-10 |
 | F5 | No snippet corpus. `friendly-snippets` (the `yasnippet-snippets` / `doom-snippets` equivalent) was installed in Phase 2 and removed the same day as unused. blink's `snippets` source is still enabled and will pick up anything you put in `~/.config/nvim/snippets/` as VSCode JSON — so writing your own few needs no plugin at all. | You want tab-expandable boilerplate and don't want to hand-write it | 2026-08-10 |
 | F2 | `evil-mc` was not replaced. `jake-stewart/multicursor.nvim` is the candidate, but its conventional `gr…` prefix now collides with Neovim 0.11+'s built-in LSP maps (`grn` rename, `gra` code action, `grr` references) and with `gr` in `lua/plugins/lsp.lua`. Pick a non-conflicting prefix before adding it. | You want multiple cursors and LSP rename isn't enough | 2026-08-10 |

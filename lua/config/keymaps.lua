@@ -11,6 +11,43 @@
 
 local map = vim.keymap.set
 
+-- ─── Picker helper ───────────────────────────────────────────────────────────
+--
+-- Defined first because mappings below call pick() at load time, not inside a
+-- closure.
+--
+-- Project root detection, replacing project.el. snacks.picker defaults to the
+-- plain working directory, so `SPC /` launched from ~ would grep your whole home
+-- directory. vim.fs.root() walks up for a marker, which is all project.el does.
+-- No plugin needed -- see decision D11.
+local root_markers = {
+    ".git",
+    "Makefile",
+    "pyproject.toml",
+    "compile_commands.json",
+    "slang.json",
+    ".envrc",
+}
+
+local function project_root()
+    return vim.fs.root(0, root_markers) or vim.uv.cwd()
+end
+
+-- Only sources that search a directory tree get a cwd. Everything else (lines,
+-- marks, registers, diagnostics, undo...) is buffer- or session-scoped and
+-- ignores it.
+local rooted = { files = true, grep = true, grep_word = true, explorer = true }
+
+local function pick(source, opts)
+    return function()
+        local args = vim.deepcopy(opts or {})
+        if rooted[source] and args.cwd == nil then
+            args.cwd = project_root()
+        end
+        Snacks.picker[source](args)
+    end
+end
+
 -- ─── Basics ──────────────────────────────────────────────────────────────────
 
 -- Clear search highlight. Emacs has no equivalent (isearch clears itself), so this
@@ -106,6 +143,24 @@ map("n", "[e", function()
     vim.diagnostic.jump({ count = -1, float = true })
 end, { desc = "Previous diagnostic" })
 
+-- Diagnostic lists (SPC x). No trouble.nvim: the picker already does this,
+-- and quickfix is where the results want to end up anyway. See D12.
+map("n", "<leader>xx", pick("diagnostics"), { desc = "Diagnostics (project)" })
+map("n", "<leader>xX", pick("diagnostics_buffer"), { desc = "Diagnostics (buffer)" })
+map("n", "<leader>xq", pick("qflist"), { desc = "Quickfix list" })
+map("n", "<leader>xl", pick("loclist"), { desc = "Location list" })
+map("n", "<leader>xd", vim.diagnostic.open_float, { desc = "Line diagnostics" })
+
+-- Toggle format-on-save, globally or for this buffer.
+map("n", "<leader>uf", function()
+    vim.g.autoformat = not vim.g.autoformat
+    vim.notify("Format on save: " .. (vim.g.autoformat and "on" or "off"))
+end, { desc = "Toggle format on save" })
+map("n", "<leader>uF", function()
+    vim.b.autoformat = not vim.b.autoformat
+    vim.notify("Format on save (buffer): " .. (vim.b.autoformat and "on" or "off"))
+end, { desc = "Toggle format on save (buffer)" })
+
 -- ─── Find / search (SPC SPC, SPC f, SPC s, SPC h) ────────────────────────────
 --
 -- snacks.picker, replacing vertico + orderless + marginalia + consult + embark on
@@ -115,36 +170,6 @@ end, { desc = "Previous diagnostic" })
 -- Inside a picker: <C-q> sends the results to the quickfix list, which is how you
 -- get wgrep-style bulk editing — see `:cfdo` in the search/replace note below.
 
--- Project root detection, replacing project.el. snacks.picker defaults to the
--- plain working directory, so `SPC /` launched from ~ would grep your whole home
--- directory. vim.fs.root() walks up for a marker, which is all project.el does.
--- No plugin needed -- see decision D11.
-local root_markers = {
-    ".git",
-    "Makefile",
-    "pyproject.toml",
-    "compile_commands.json",
-    "slang.json",
-    ".envrc",
-}
-
-local function project_root()
-    return vim.fs.root(0, root_markers) or vim.uv.cwd()
-end
-
--- Only sources that search a directory tree get a cwd. Everything else (lines,
--- marks, registers, undo...) is buffer- or session-scoped and ignores it.
-local rooted = { files = true, grep = true, grep_word = true, explorer = true }
-
-local function pick(source, opts)
-    return function()
-        local args = vim.deepcopy(opts or {})
-        if rooted[source] and args.cwd == nil then
-            args.cwd = project_root()
-        end
-        Snacks.picker[source](args)
-    end
-end
 
 map("n", "<leader><space>", pick("files"), { desc = "Find file in project" })
 map("n", "<leader>,", pick("buffers"), { desc = "Switch buffer" })
