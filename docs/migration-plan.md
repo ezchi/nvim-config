@@ -341,6 +341,10 @@ plugin. Investigation showed both were already covered — see D11 and F8. **One
       `require("persistence").load()` to restore that project's session — snacks looks the
       plugin up by name, which is why persistence was the right choice over alternatives
 - [x] `SPC p r` shows the detected root, for when a picker searches somewhere surprising
+- [x] `SPC p D` opens **any** directory as a project — the `project-prompt-project-dir`
+      equivalent. `Snacks.picker.projects()` can only match directories it already scanned,
+      so this covers first-time and one-off projects. Path completion works because
+      `Snacks.input` forwards `completion = "dir"` to `vim.fn.getcompletion()`
 - [x] `envrc` → **no plugin (F8)**
 - [x] `SPC <tab>` tabspaces mirror — already done in Phase 1
 - [x] `SPC p d` → `:tcd` kept

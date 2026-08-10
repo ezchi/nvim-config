@@ -190,6 +190,30 @@ map("n", "<leader>hH", pick("highlights"), { desc = "Highlight groups" })
 -- on exit by persistence.nvim, so there is no "save session" key.
 
 map("n", "<leader>pp", pick("projects"), { desc = "Switch project" })
+
+-- project-prompt-project-dir: open any directory as a project, whether or not
+-- the picker already knows about it. Same end state as SPC p p -- chdir, then
+-- restore that directory's session if it has one.
+map("n", "<leader>pD", function()
+    vim.ui.input({ prompt = "Project dir: ", completion = "dir" }, function(input)
+        if not input or input == "" then
+            return
+        end
+        local dir = vim.fs.normalize(vim.fn.expand(input))
+        if vim.fn.isdirectory(dir) == 0 then
+            vim.notify("Not a directory: " .. dir, vim.log.levels.ERROR)
+            return
+        end
+        vim.fn.chdir(dir)
+        require("persistence").load() -- no-op when the project has no session yet
+        vim.schedule(function()
+            if vim.api.nvim_buf_get_name(0) == "" then
+                Snacks.picker.files({ cwd = dir })
+            end
+        end)
+    end)
+end, { desc = "Open project by directory" })
+
 map("n", "<leader>pd", ":tcd ", { desc = "Tab-local CWD" })
 map("n", "<leader>pr", function()
     vim.notify("Project root: " .. project_root())

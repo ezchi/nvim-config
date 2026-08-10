@@ -110,6 +110,7 @@ Emacs also has `SPC c c` compile / `SPC c C` recompile — those land in **phase
 | Key | Mode | Action | Emacs |
 |---|---|---|---|
 | `SPC p p` | n | Switch project (chdir + restore its session) | `SPC TAB .` tabspaces-switch-or-create |
+| `SPC p D` | n | Open **any** directory as a project | `project-prompt-project-dir` |
 | `SPC p d` | n | Tab-local cwd | |
 | `SPC p r` | n | Show detected project root | |
 | `SPC p l` | n | Restore session for cwd | |
