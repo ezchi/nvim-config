@@ -8,6 +8,11 @@ return {
     dashboard = { enabled = true },
     indent = { enabled = true },
     input = { enabled = true },
+    -- Replaces vertico + orderless + marginalia + consult + embark, and
+    -- telescope. Enabling it also routes vim.ui.select through the picker.
+    picker = { enabled = true },
+    -- Replaces dired. A file tree you can edit, rather than a separate plugin.
+    explorer = { enabled = true },
     notifier = {
       enabled = true,
       timeout = 3000,

@@ -108,40 +108,55 @@ end, { desc = "Previous diagnostic" })
 
 -- ─── Find / search (SPC SPC, SPC f, SPC s, SPC h) ────────────────────────────
 --
--- These keys are the contract; the picker behind them is not. Telescope is the
--- implementation today and gets swapped for snacks.picker in phase 3 — when that
--- happens only the right-hand side of these mappings changes, not the keys.
+-- snacks.picker, replacing vertico + orderless + marginalia + consult + embark on
+-- the Emacs side and telescope here. The keys are the contract from §4 and did not
+-- move when the picker was swapped in.
+--
+-- Inside a picker: <C-q> sends the results to the quickfix list, which is how you
+-- get wgrep-style bulk editing — see `:cfdo` in the search/replace note below.
 
-local telescope = require("telescope.builtin")
+local function pick(source, opts)
+    return function()
+        Snacks.picker[source](opts)
+    end
+end
 
-map("n", "<leader><space>", telescope.find_files, { desc = "Find file in project" })
-map("n", "<leader>,", telescope.buffers, { desc = "Switch buffer" })
-map("n", "<leader>/", telescope.live_grep, { desc = "Grep project" })
+map("n", "<leader><space>", pick("files"), { desc = "Find file in project" })
+map("n", "<leader>,", pick("buffers"), { desc = "Switch buffer" })
+map("n", "<leader>/", pick("grep"), { desc = "Grep project" })
 
 -- File
-map("n", "<leader>ff", telescope.find_files, { desc = "Find file" })
-map("n", "<leader>fr", telescope.oldfiles, { desc = "Recent files" })
+map("n", "<leader>ff", pick("files"), { desc = "Find file" })
+map("n", "<leader>fr", pick("recent"), { desc = "Recent files" })
 map("n", "<leader>fn", "<cmd>enew<CR>", { desc = "New file" })
+map("n", "<leader>fe", pick("explorer"), { desc = "File explorer (dired)" })
 
 -- Search
-map("n", "<leader>sg", telescope.live_grep, { desc = "Grep project" })
-map("n", "<leader>sb", telescope.current_buffer_fuzzy_find, { desc = "Search buffer" })
-map("n", "<leader>sl", telescope.current_buffer_fuzzy_find, { desc = "Search buffer lines" })
-map("n", "<leader>si", telescope.lsp_document_symbols, { desc = "Symbols (LSP)" })
-map("n", "<leader>sh", telescope.treesitter, { desc = "Outline (treesitter)" })
-map("n", "<leader>sm", telescope.marks, { desc = "Marks" })
-map("n", "<leader>sf", telescope.find_files, { desc = "Find file" })
-map("n", "<leader>sr", telescope.resume, { desc = "Resume last search" })
+map("n", "<leader>sg", pick("grep"), { desc = "Grep project" })
+map("n", "<leader>sb", pick("lines"), { desc = "Search buffer lines" })
+map("n", "<leader>sl", pick("lines"), { desc = "Search buffer lines" })
+map("n", "<leader>si", pick("lsp_symbols"), { desc = "Symbols (LSP)" })
+map("n", "<leader>sh", pick("treesitter"), { desc = "Outline (treesitter)" })
+map("n", "<leader>sm", pick("marks"), { desc = "Marks" })
+map("n", "<leader>sf", pick("files"), { desc = "Find file" })
+map("n", "<leader>sr", pick("resume"), { desc = "Resume last picker" })
+map("n", "<leader>sR", pick("registers"), { desc = "Registers" })
+map("n", "<leader>su", pick("undo"), { desc = "Undo history" })
+
+-- Grep the symbol under the cursor. `SPC *` in Emacs
+-- (my/search-project-for-symbol-at-point).
+map({ "n", "x" }, "<leader>*", pick("grep_word"), { desc = "Grep symbol at point" })
 
 -- Buffer list also under its own prefix, matching `SPC b b` in Emacs.
-map("n", "<leader>bb", telescope.buffers, { desc = "Switch buffer" })
+map("n", "<leader>bb", pick("buffers"), { desc = "Switch buffer" })
 
 -- Help (SPC h) — mirrors the helpful/describe block in Emacs.
-map("n", "<leader>hh", telescope.help_tags, { desc = "Help tags" })
-map("n", "<leader>hk", telescope.keymaps, { desc = "Keymaps" })
-map("n", "<leader>hc", telescope.commands, { desc = "Commands" })
-map("n", "<leader>hm", "<cmd>Telescope man_pages<CR>", { desc = "Man pages" })
-map("n", "<leader>ho", telescope.vim_options, { desc = "Vim options" })
+map("n", "<leader>hh", pick("help"), { desc = "Help tags" })
+map("n", "<leader>hk", pick("keymaps"), { desc = "Keymaps" })
+map("n", "<leader>hc", pick("commands"), { desc = "Commands" })
+map("n", "<leader>hm", pick("man"), { desc = "Man pages" })
+map("n", "<leader>ha", pick("autocmds"), { desc = "Autocommands" })
+map("n", "<leader>hH", pick("highlights"), { desc = "Highlight groups" })
 
 -- ─── Project / session (SPC p) ───────────────────────────────────────────────
 -- Replaced by proper project detection and persistence.nvim in phase 4.

@@ -61,7 +61,11 @@ return {
         lazy = true,
         dependencies = {
             "nvim-lua/plenary.nvim",
-            "nvim-telescope/telescope.nvim",
+            "folke/snacks.nvim",
+        },
+        opts = {
+            -- Was telescope; neogit has a native snacks picker integration.
+            integrations = { snacks = true },
         },
         cmd = "Neogit",
         keys = {
