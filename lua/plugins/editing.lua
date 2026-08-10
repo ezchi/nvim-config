@@ -6,6 +6,8 @@
 --   * evil-numbers        -> `<C-a>` / `<C-x>` are built in
 --   * evil-owl            -> which-key already previews registers and marks
 --   * evil-mc             -> see follow-up F2; `gr` is now the builtin LSP prefix
+--   * undo-fu-session     -> 'undofile' in lua/config/options.lua covers persistence;
+--                            a tree visualiser is follow-up F4
 return {
     -- evil-surround. ys/cs/ds, the vim-surround keys evil-surround emulates.
     {
@@ -61,16 +63,6 @@ return {
                 function() require("mini.trailspace").trim() end,
                 desc = "Trim trailing whitespace",
             },
-        },
-    },
-
-    -- undo-fu-session's visualiser half. Persistence itself is just 'undofile',
-    -- set in lua/config/options.lua.
-    {
-        "mbbill/undotree",
-        cmd = "UndotreeToggle",
-        keys = {
-            { "<leader>uu", "<cmd>UndotreeToggle<CR>", desc = "Undo tree" },
         },
     },
 }

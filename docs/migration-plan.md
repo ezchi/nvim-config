@@ -242,10 +242,10 @@ Pulled forward from Phase 5 (D8). Fixes I1.
 | `evil-lion` | `nvim-mini/mini.align` — `ga` / `gA`, and Emacs rebound to match (was `gl` / `gL`) | [x] |
 | `evil-owl` | which-key register/mark preview, already installed | [x] |
 | `evil-numbers` | built-in `<C-a>` / `<C-x>` — **deliberate divergence, see below** | [x] |
-| `undo-fu` + session | `undofile` + `undolevels = 10000` + `mbbill/undotree` on `<leader>uu` | [x] |
+| `undo-fu` + session | `undofile` + `undolevels = 10000`. **undotree removed** — see F4 | [x] |
 | `super-save` | `FocusLost` / `BufLeave` autocmd, guarded on modified + modifiable + real file | [x] |
 | `ws-butler` | `nvim-mini/mini.trailspace` — highlight always, trim on `<leader>cw` | [x] |
-| `yasnippet` + `doom-snippets` | `friendly-snippets` via blink — **no LuaSnip, see D9** | [x] |
+| `yasnippet` + `doom-snippets` | blink's built-in `snippets` source over `vim.snippet` — **no LuaSnip (D9), and no snippet pack, see F5** | [x] |
 | `evil-mc` | **skipped** — see follow-up F2 | — |
 | custom filepath textobject (`vif`/`vaf`) | not ported — see follow-up F3 | — |
 
@@ -467,6 +467,7 @@ One line per working session. Newest last.
 | 2026-08-10 | — | Surveyed both configs; wrote this plan. Decisions D1–D6 locked. |
 | 2026-08-10 | 0 | Baseline done. Health triaged: only real finding is **zero treesitter parsers installed** (I1 confirmed, worse than expected). Two snacks "errors" proved to be headless artifacts — caveat added to §0. lazy-lock verified in sync (27/27). Emacs loads clean. Providers disabled. |
 | 2026-08-10 | 1 | `H` / `L` resolved as D7 — vim defaults on both sides, evil-args binding dropped. Logged F1 to revisit if missed. Phase 1 is unblocked. |
+| 2026-08-10 | 2 | Trimmed on review: **undotree and friendly-snippets removed** as unused (F4, F5), 26 → 24 plugins. `undofile` and blink's snippet source stay — neither needed the plugin. |
 | 2026-08-10 | 2 | **Done.** 6 plugins added (nvim-surround, flash, mini.ai, mini.align, mini.trailspace, undotree) + friendly-snippets; `gc` and `<C-a>`/`<C-x>` needed no plugin at all. Two things fell out cheaper than planned: `~/.emacs.d/snippets/` is empty so LuaSnip was dropped entirely (D9), and mini.ai covers the custom quoted text objects for free. `evil-mc` deferred to F2 over the `gr` LSP-prefix collision. 26 plugins, 0 health errors. Next: **Phase 3** (snacks.picker). |
 | 2026-08-10 | 1 + 1b | **Both done.** Keymap contract implemented on both sides (12 Neovim items, 14 Emacs edits). Neorg removed, 27 → 19 plugins, which killed the luarocks/Lua 5.1 error. Treesitter rebuilt for the `main` API: 26 parsers installed, highlighter and indentexpr verified live in a real buffer. Targeted `:checkhealth` is **0 errors**, down from 3. Emacs loads clean. Next: **Phase 2** (editing parity) or **Phase 3** (snacks.picker) — independent, pick either. |
 
@@ -478,6 +479,8 @@ Deliberately deferred. Not blocking any phase; revisit when the trigger fires.
 
 | # | Item | Trigger to revisit | Raised |
 |---|---|---|---|
+| F4 | `mbbill/undotree` was installed in Phase 2 and removed the same day as unused. Persistent undo still works — that is `undofile`, not the plugin. Re-add only if you actually want to browse the undo *tree* (branches), which plain `u` / `<C-r>` cannot reach. | You lose work down an undo branch | 2026-08-10 |
+| F5 | No snippet corpus. `friendly-snippets` (the `yasnippet-snippets` / `doom-snippets` equivalent) was installed in Phase 2 and removed the same day as unused. blink's `snippets` source is still enabled and will pick up anything you put in `~/.config/nvim/snippets/` as VSCode JSON — so writing your own few needs no plugin at all. | You want tab-expandable boilerplate and don't want to hand-write it | 2026-08-10 |
 | F2 | `evil-mc` was not replaced. `jake-stewart/multicursor.nvim` is the candidate, but its conventional `gr…` prefix now collides with Neovim 0.11+'s built-in LSP maps (`grn` rename, `gra` code action, `grr` references) and with `gr` in `lua/plugins/lsp.lua`. Pick a non-conflicting prefix before adding it. | You want multiple cursors and LSP rename isn't enough | 2026-08-10 |
 | F3 | The custom filepath text object from `my-evil.el` (`vif` = basename, `vaf` = full path) was not ported. Doable as a custom `mini.ai` spec. | You reach for `vif` on a path and it selects a function | 2026-08-10 |
 | F1 | `H` / `L` argument motions (`evil-forward-arg` / `evil-backward-arg`) were dropped per D7. If you find yourself missing a "jump to next/previous function argument" motion, add it in Neovim via `nvim-treesitter-textobjects` (e.g. `]a` / `[a`) rather than re-taking `H` / `L`. | You reach for it and it isn't there | 2026-08-10 |

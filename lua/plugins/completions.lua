@@ -2,12 +2,11 @@ return {
     {
         "Saghen/blink.cmp",
         version = "*",
-        -- Replaces yasnippet-snippets + doom-snippets. blink's default snippet
-        -- source already sets friendly_snippets = true and scans the runtimepath,
-        -- so no LuaSnip is needed: expansion goes through Neovim's built-in
-        -- vim.snippet. Custom snippets go in ~/.config/nvim/snippets as VSCode
-        -- JSON. (~/.emacs.d/snippets was empty, so nothing had to be ported.)
-        dependencies = { "rafamadriz/friendly-snippets" },
+        -- The `snippets` source below is blink's built-in one, expanding through
+        -- Neovim's own vim.snippet. No snippet corpus ships with it: it scans the
+        -- runtimepath and ~/.config/nvim/snippets for VSCode-style JSON, so it is
+        -- live and empty until you write a snippet there. A community pack
+        -- (friendly-snippets, the yasnippet-snippets equivalent) is follow-up F5.
         opts = {
             keymap = {
                 preset = "default",
