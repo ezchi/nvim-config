@@ -7,6 +7,11 @@ vim.opt.tabstop = 4
 
 vim.opt.cursorline = true
 
+-- Persistent undo across sessions. This is the undo-fu-session half of the
+-- Emacs setup; undotree (lua/plugins/editing.lua) is the visualiser.
+vim.opt.undofile = true
+vim.opt.undolevels = 10000
+
 -- Enable true color
 vim.opt.termguicolors = true
 
