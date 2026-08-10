@@ -72,7 +72,7 @@ Status values: `TODO` · `IN PROGRESS` · `DONE` · `SKIPPED`
 | 3 | Finding and navigation | **DONE** | 2026-08-10 | 1–2 h | — |
 | 4 | Project and workspace | **DONE** | 2026-08-10 | 1 h | 6 |
 | 5 | LSP, diagnostics, format, lint | **DONE** | 2026-08-11 | 2 h | 6 |
-| 6 | Languages (one at a time) | TODO | | 30 min each | — |
+| 6 | Languages (one at a time) | **DONE** | 2026-08-11 | 30 min each | — |
 | 7 | Git | TODO | | 1 h | — |
 | 8 | Terminal, build, run | TODO | | 1 h | — |
 | 9 | AI | TODO | | 1 h | — |
@@ -96,6 +96,7 @@ Append here; do not silently change an earlier entry.
 | D4 | 2026-08-10 | **Hand-rolled config, not a distro.** Steal from LazyVim's source; do not install LazyVim. | User wants to understand and learn the config. |
 | D5 | 2026-08-10 | **snacks.picker, not telescope.** | Both are currently installed; running two pickers is the main source of drift. snacks is already loaded and is the closest match to vertico+consult+embark. |
 | D6 | 2026-08-10 | **Emacs endgame is an org-only appliance** behind `emacsclient` + daemon, gated so the full config can be restored with an env var. Not deleted. | Insurance against a regressed phase. |
+| D13 | 2026-08-11 | **`mason-lspconfig` `automatic_enable = false`.** Language servers are enabled explicitly in `lua/config/lsp.lua`. | Left on, it enables every mason package that happens to have an lspconfig entry. Installing `stylua` as a *formatter* silently started `stylua --lsp` as a *server*, competing with conform. Explicit enabling means installing a tool never changes editor behaviour by surprise. |
 | D12 | 2026-08-11 | **No trouble.nvim and no nvim-lint (yet).** Diagnostic lists use `Snacks.picker.diagnostics` / `diagnostics_buffer` / `qflist` / `loclist` on `SPC x`. Linting is deferred to Phase 6, per language. | `Snacks.picker.diagnostics()` already gives a filterable, previewable diagnostic list, and quickfix is where results want to end up. trouble's real edge is a *persistent* split — add it if you miss that. For linting: every language configured today (Python, C/C++, SystemVerilog) gets diagnostics from its LSP, so nvim-lint would sit idle. The two standalone linters on this machine, `shellcheck` and `verible-verilog-lint`, belong to specific languages — wire them where those languages are set up. |
 | D11 | 2026-08-10 | **Project root detection is `vim.fs.root()` in the `pick()` helper, not a plugin.** Marker list: `.git`, `Makefile`, `pyproject.toml`, `compile_commands.json`, `slang.json`, `.envrc`. | The gap was real — snacks.picker defaults to plain `uv.cwd()` — but `vim.fs.root()` does what `project.el` does in three lines. Only the picker was affected; LSP has its own `root_markers`, git tools ask git. |
 | D10 | 2026-08-10 | **Phase 3 adds no plugins.** `dired` → `Snacks.explorer` rather than `oil.nvim`; `wgrep`/`substitute` → the native `<C-q>` → quickfix → `:cfdo` flow rather than `grug-far.nvim`. | Both were already paid for: snacks is loaded and has an explorer source, and quickfix bulk-edit is built in. Consistent with the Phase 2 pattern of removing plugins that turned out to duplicate built-ins. `oil.nvim` is a genuinely different model (edit the directory as text) — worth revisiting only if `Snacks.explorer` annoys you. |
@@ -415,28 +416,74 @@ declared anywhere. Either run that command again or revisit in Phase 6.
 
 ---
 
-### Phase 6 — Languages · `TODO`
+### Phase 6 — Languages · `DONE` (2026-08-11)
 
-Do these in the order you actually use them. Each is ~30 min once Phase 5 lands.
+**Scope was set by counting files in `~/Projects`, not by porting the Emacs module list.**
+That changed the plan substantially — three of the languages with Emacs modules turned out
+to be unused.
 
-| Emacs module | Neovim work | Done |
+| Extension | Files | Verdict |
 |---|---|---|
-| `my-python.el` (basedpyright, pet, black, pylint, tox) | basedpyright ✓ + ruff + venv via direnv | [ ] |
-| `my-cpp.el` (clangd, cmake-ts-mode, eldoc-cmake) | clangd ✓ + `neocmake` + `Civitasv/cmake-tools.nvim` | [ ] |
-| `my-verilog.el` (verilog-ts-mode, verilog-ext, slang) | slang-server ✓ — **`verilog-ext` has no Neovim equivalent**; audit which features (hierarchy, templates, beautify) you rely on and decide per feature | [ ] |
-| `my-vhdl.el` (vhdl-ext, vhdl-ts-mode) | `rust_hdl` / `vhdl_ls` — same caveat | [ ] |
-| `my-go.el` (234 lines) | `gopls` + `ray-x/go.nvim` | [ ] |
-| `my-rust.el` (rustic) | `mrcjkb/rustaceanvim` | [ ] |
-| `my-lua.el` | `lua_ls` + `folke/lazydev.nvim` (essential for editing this config) | [ ] |
-| `my-yaml.el`, `toml-mode` | `yamlls`, `taplo` | [ ] |
-| `my-jinja.el` | treesitter `jinja2` + `djlint` | [ ] |
-| `my-shell.el`, `sh-script` | `bashls` + `shellcheck` via nvim-lint | [ ] |
-| `markdown-mode` | `render-markdown.nvim` + `marksman` | [ ] |
-| `graphviz-dot`, `plantuml`, `mermaid` modes | treesitter + external render commands — **preview is a downgrade** | [ ] |
+| `.v` / `.svh` / `.sv` | 1885 / 167 / 133 | **dominant** — configured |
+| `.md` | 866 | configured |
+| `.h` / `.cpp` / `.cc` | 272 / 186 / 7 | configured |
+| `.py` | 129 | configured |
+| `.sh` | 126 | configured |
+| `.toml` / `.yml` / `.yaml` | 79 / 38 / 8 | configured |
+| `.lua` | 18 | configured (this repo) |
+| `.rs` | 1 | **skipped** — no rust-analyzer installed either |
+| `.vhd` | 1 | **skipped** |
+| `.go` | **0** | **skipped** — no Go toolchain either. `my-go.el` is 234 lines of dead config |
 
-**Done when:** every language you touched in the last month has LSP + format + lint.
+**Servers wired and verified attaching to a real file of each type:**
 
----
+| Filetype | Client(s) | Installed via |
+|---|---|---|
+| python | `basedpyright` + `ruff` | mason / `~/.local/bin` |
+| systemverilog, verilog | `slang_server` | `~/.local/bin` |
+| c, cpp | `clangd` | mason |
+| lua | `lua_ls` + lazydev | mason |
+| markdown | `marksman` | mason |
+| yaml | `yamlls` | mason |
+| toml | `taplo` | cargo |
+| sh, bash | `bashls` | homebrew |
+
+`ruff` runs *alongside* basedpyright — types and completion from one, lint and import
+sorting from the other. Together they replace `pylint` + flymake, which is why Python needs
+no nvim-lint entry.
+
+**Linting (`nvim-lint`, the D12 deferral now resolved):** only two filetypes need it, since
+everything else gets diagnostics from a language server.
+
+- `shellcheck` for sh/bash — 126 files
+- `verible` for verilog/systemverilog — **custom linter definition**, because nvim-lint
+  ships `slang`, `verilator` and `ghdl` but *not* verible. verible checks style (naming,
+  formatting conventions); slang-server checks elaboration and semantics. Verified both
+  appear simultaneously on one buffer under separate namespaces, so they do not overlap.
+
+**Three things verification caught that would have failed silently:**
+
+1. **`stylua` was running as a language server.** `mason-lspconfig`'s `automatic_enable`
+   defaults to on and enables *every* installed mason package that has an lspconfig entry —
+   and nvim-lspconfig ships a `stylua` entry (`stylua --lsp`). Installing stylua as a
+   formatter in Phase 5 silently started it as a server competing with conform. Fixed with
+   `automatic_enable = false`; servers are enabled explicitly in `lua/config/lsp.lua`. See D13.
+2. **`nvim-lint` has no `verible_verilog_lint` linter.** The name from the original plan
+   does not exist, so the config would have been a no-op.
+3. **verible writes to stderr, not stdout.** With `stream = "stdout"` the linter ran and
+   parsed nothing. Only caught by checking diagnostic *namespaces* — a `vim.diagnostic.get()`
+   count looked like success because slang-server's diagnostic was sitting in the buffer.
+
+**Filetype check that turned out fine:** `vim.filetype.match()` on a bare `.v` filename
+returns `v` (the V language), which would have broken 1885 files. On real content Neovim
+detects `verilog` correctly, and already maps that filetype to the `systemverilog` parser.
+No fix needed — verified rather than assumed.
+
+**Not configured, deliberately:** Go, Rust, VHDL (see the file counts above), jinja,
+graphviz/plantuml/mermaid. `cmake` has no `.cmake` files here; `CMakeLists.txt` support can
+come with a real need.
+
+**Done when:** ✅ every language you touched in the last month has LSP, format, and lint.
 
 ### Phase 7 — Git · `TODO`
 
@@ -556,6 +603,7 @@ One line per working session. Newest last.
 | 2026-08-10 | — | Surveyed both configs; wrote this plan. Decisions D1–D6 locked. |
 | 2026-08-10 | 0 | Baseline done. Health triaged: only real finding is **zero treesitter parsers installed** (I1 confirmed, worse than expected). Two snacks "errors" proved to be headless artifacts — caveat added to §0. lazy-lock verified in sync (27/27). Emacs loads clean. Providers disabled. |
 | 2026-08-10 | 1 | `H` / `L` resolved as D7 — vim defaults on both sides, evil-args binding dropped. Logged F1 to revisit if missed. Phase 1 is unblocked. |
+| 2026-08-11 | 6 | **Done, scoped by file counts rather than by the Emacs module list** — Go (0 files, no toolchain), Rust (1) and VHDL (1) dropped. 8 languages wired, each verified attaching to a real file. 2 plugins (lazydev, nvim-lint), 23 → 25. Verification caught three silent failures: stylua running as an LSP (D13), a linter name that does not exist, and verible writing to stderr. Next: **Phase 7** (git) — neogit is already installed, mostly needs diffview and learning. |
 | 2026-08-11 | 5 | **Done.** One plugin added (conform), 22 → 23. trouble.nvim and nvim-lint both declined (D12): the picker already lists diagnostics, and every configured language gets them from its LSP. Formatters verified end-to-end for lua/python/plain-text rather than just loaded. **F6 closed** by conform's `trim_whitespace`. I9 and I10 deprecations fixed; `:checkhealth vim.deprecated` clean. Next: **Phase 6** (languages), which also picks up mason tool declarations and per-language linters. |
 | 2026-08-10 | 4 | **Done, rewritten first.** Challenged the two plugin assumptions and both fell: root detection is `vim.fs.root()` in three lines (D11), and direnv is already handled by the zsh hook (F8). Only persistence.nvim added, 21 → 22 — and it earns its place because `Snacks.picker.projects()` looks it up **by name** to restore a project's session on switch, giving the tabspaces workflow. Next: **Phase 5** (LSP/format/lint), which also closes F6. |
 | 2026-08-10 | 3 | **Done, and it removed plugins instead of adding them** (23 → 21): telescope + fzf-native out, nothing in. `Snacks.explorer` covers dired and the native `<C-q>`/`:cfdo` flow covers wgrep, so neither oil.nvim nor grug-far was needed (D10, F7). Neogit moved to its native snacks integration. `vim.ui.select` now routes through the picker, closing a Phase 0 health warning. Next: **Phase 4** (project/workspace) — it blocks Phase 6 via direnv. |

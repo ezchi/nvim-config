@@ -15,9 +15,51 @@ vim.lsp.config("clangd", {
     capabilities = capabilities,
 })
 
-vim.lsp.enable("basedpyright")
-vim.lsp.enable("slang_server")
-vim.lsp.enable("clangd")
+-- ruff runs alongside basedpyright: basedpyright does types and completion,
+-- ruff does lint and import sorting. Together they replace pylint + flymake,
+-- which is why nvim-lint is not needed for Python.
+vim.lsp.config("ruff", {
+    cmd = { "ruff", "server" },
+    filetypes = { "python" },
+    root_markers = { "pyproject.toml", "ruff.toml", ".ruff.toml", ".git" },
+    capabilities = capabilities,
+})
+
+vim.lsp.config("lua_ls", {
+    capabilities = capabilities,
+    settings = {
+        Lua = {
+            -- lazydev supplies the Neovim API types; telling lua_ls the
+            -- runtime version and globals avoids the usual `vim` warnings.
+            runtime = { version = "LuaJIT" },
+            workspace = { checkThirdParty = false },
+            diagnostics = { globals = { "vim", "Snacks" } },
+        },
+    },
+})
+
+vim.lsp.config("bashls", { capabilities = capabilities })
+vim.lsp.config("marksman", { capabilities = capabilities })
+vim.lsp.config("yamlls", { capabilities = capabilities })
+
+vim.lsp.config("taplo", {
+    cmd = { "taplo", "lsp", "stdio" },
+    filetypes = { "toml" },
+    root_markers = { ".taplo.toml", "taplo.toml", ".git" },
+    capabilities = capabilities,
+})
+
+vim.lsp.enable({
+    "basedpyright",
+    "ruff",
+    "slang_server",
+    "clangd",
+    "lua_ls",
+    "bashls",
+    "marksman",
+    "yamlls",
+    "taplo",
+})
 
 -- Diagnostics presentation, replacing the flymake setup in my-lsp.el.
 -- ]e / [e navigate; SPC x x lists. See lua/config/keymaps.lua.

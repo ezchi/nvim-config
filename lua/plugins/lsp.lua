@@ -36,8 +36,22 @@ return {
             "neovim/nvim-lspconfig",
         },
         config = function()
+            -- Servers mason should install on a fresh machine. Not listed here
+            -- because they come from elsewhere: slang-server and ruff (~/.local/bin),
+            -- taplo (cargo), bash-language-server (homebrew).
             require("mason-lspconfig").setup({
-                ensure_installed = { "basedpyright", "clangd" },
+                -- Off, because it enables *every* mason package that happens to
+                -- have an lspconfig entry. Installing stylua as a formatter also
+                -- started `stylua --lsp` as a language server, competing with
+                -- conform. Servers are enabled explicitly in lua/config/lsp.lua.
+                automatic_enable = false,
+                ensure_installed = {
+                    "basedpyright",
+                    "clangd",
+                    "lua_ls",
+                    "marksman",
+                    "yamlls",
+                },
             })
         end,
     },
