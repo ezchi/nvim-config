@@ -12,7 +12,10 @@
 If you are starting a fresh session:
 
 1. Read §1 (context), §2 (status dashboard), §3 (locked decisions).
-2. Find the first phase in §2 whose status is not `DONE`. That is the next work.
+2. Find the first phase in §2 whose status is `TODO` or `IN PROGRESS`. That is the next work.
+   **Skip `DEFERRED` rows** — those were postponed on purpose (D15); do not start one
+   without asking. If every remaining row is `DEFERRED`, the migration is at its intended
+   stopping point: say so rather than inventing work.
 3. Open that phase's section in §5. Work through its unchecked `[ ]` items in order.
 4. When a phase is finished:
    - tick every `[x]` item,
@@ -61,7 +64,10 @@ org-babel, jupyter, wavedrom, plantuml, mermaid, ditaa).
 
 ## 2. Status dashboard
 
-Status values: `TODO` · `IN PROGRESS` · `DONE` · `SKIPPED`
+Status values: `TODO` · `IN PROGRESS` · `DONE` · `DEFERRED` · `SKIPPED`
+
+`DEFERRED` means consciously postponed, not abandoned — the work is still specified below
+and can be picked up any time. See D15.
 
 | # | Phase | Status | Date | Effort | Blocks |
 |---|---|---|---|---|---|
@@ -75,9 +81,9 @@ Status values: `TODO` · `IN PROGRESS` · `DONE` · `SKIPPED`
 | 6 | Languages (one at a time) | **DONE** | 2026-08-11 | 30 min each | — |
 | 7 | Git | **DONE** | 2026-08-11 | 1 h | — |
 | 8 | Terminal, build, run | **DONE** | 2026-08-11 | 1 h | — |
-| 9 | AI | TODO | | 1 h | — |
-| 10 | Appearance and long tail | TODO | | 1 h | — |
-| 11 | Cutover | TODO | | 1 h | all |
+| 9 | AI | **DEFERRED** | 2026-08-11 | 1 h | — |
+| 10 | Appearance and long tail | **DEFERRED** | 2026-08-11 | 1 h | — |
+| 11 | Cutover | **DEFERRED** | 2026-08-11 | 1 h | all |
 
 Phases 2, 3, 7, 8, 9, 10 are mutually independent — reorder by whatever annoys you most.
 Phase 1 must come first. Phase 11 must come last.
@@ -96,6 +102,7 @@ Append here; do not silently change an earlier entry.
 | D4 | 2026-08-10 | **Hand-rolled config, not a distro.** Steal from LazyVim's source; do not install LazyVim. | User wants to understand and learn the config. |
 | D5 | 2026-08-10 | **snacks.picker, not telescope.** | Both are currently installed; running two pickers is the main source of drift. snacks is already loaded and is the closest match to vertico+consult+embark. |
 | D6 | 2026-08-10 | **Emacs endgame is an org-only appliance** behind `emacsclient` + daemon, gated so the full config can be restored with an env var. Not deleted. | Insurance against a regressed phase. |
+| D15 | 2026-08-11 | **Phases 9 (AI), 10 (appearance) and 11 (cutover) are deferred**, not cancelled. Phases 0–8 stand as a complete, usable Neovim setup. | Enze's call. Nothing in 9–11 blocks daily work: AI still has `SPC a g`, the editor is already themed and readable, and deferring cutover simply means Emacs keeps its full config — which is the safety net D6 wanted anyway. The specs stay in §5 so any of them can be picked up unchanged. |
 | D14 | 2026-08-11 | **No linter plugin.** SystemVerilog linting is `slang-server`; shell linting is `bash-language-server`'s built-in shellcheck. `nvim-lint` installed in Phase 6 and removed the same day. | Enze chose slang over verible, and slang-server *is* slang — measured, the CLI reports the same findings the server already does, so both together double every warning. bashls likewise already runs shellcheck. Re-add nvim-lint only for the `[-Wflag-name]` suffix the CLI prints and the server omits. |
 | D13 | 2026-08-11 | **`mason-lspconfig` `automatic_enable = false`.** Language servers are enabled explicitly in `lua/config/lsp.lua`. | Left on, it enables every mason package that happens to have an lspconfig entry. Installing `stylua` as a *formatter* silently started `stylua --lsp` as a *server*, competing with conform. Explicit enabling means installing a tool never changes editor behaviour by surprise. |
 | D12 | 2026-08-11 | **No trouble.nvim and no nvim-lint (yet).** Diagnostic lists use `Snacks.picker.diagnostics` / `diagnostics_buffer` / `qflist` / `loclist` on `SPC x`. Linting is deferred to Phase 6, per language. | `Snacks.picker.diagnostics()` already gives a filterable, previewable diagnostic list, and quickfix is where results want to end up. trouble's real edge is a *persistent* split — add it if you miss that. For linting: every language configured today (Python, C/C++, SystemVerilog) gets diagnostics from its LSP, so nvim-lint would sit idle. The two standalone linters on this machine, `shellcheck` and `verible-verilog-lint`, belong to specific languages — wire them where those languages are set up. |
@@ -675,6 +682,7 @@ One line per working session. Newest last.
 | 2026-08-10 | — | Surveyed both configs; wrote this plan. Decisions D1–D6 locked. |
 | 2026-08-10 | 0 | Baseline done. Health triaged: only real finding is **zero treesitter parsers installed** (I1 confirmed, worse than expected). Two snacks "errors" proved to be headless artifacts — caveat added to §0. lazy-lock verified in sync (27/27). Emacs loads clean. Providers disabled. |
 | 2026-08-10 | 1 | `H` / `L` resolved as D7 — vim defaults on both sides, evil-args binding dropped. Logged F1 to revisit if missed. Phase 1 is unblocked. |
+| 2026-08-11 | — | **Phases 9, 10 and 11 deferred at Enze's request (D15).** Phases 0–8 are complete and the config is in a steady, usable state: 25 plugins, 0 health errors. Deferring 11 means `~/.emacs.d` keeps its full config, so both editors remain fully functional. |
 | 2026-08-11 | 8 | **Done, zero plugins.** `compile`/`recompile` written directly on `vim.system` + `setqflist` (~110 lines) rather than adding overseer — `:make` blocks the UI and overseer is more than `compile` is. Verilator/gcc/python error formats, live output, quickfix on failure. Caught two bugs: unmatched output lines polluting quickfix, and a collision where codelens already held `SPC c c`. Next: **Phase 9** (AI). |
 | 2026-08-11 | 7 | **Done.** One plugin (diffview), 24 → 25 — the one genuine gap, since it is the only source of side-by-side changeset diffs, steppable file history and 3-way merges, and it replaces both `ediff` and `git-timemachine`. The other eight `SPC g` entries came free from `Snacks.picker`'s git sources. Fixed two keymap collisions against the magit map. Next: **Phase 8** (terminal, build, run). |
 | 2026-08-11 | 6 | Verilog linting switched from verible to **slang** at Enze's request — which then made the linter plugin redundant, since slang-server is slang. Measured the overlap, found the CLI re-reports what the LSP already gives, and confirmed bashls runs shellcheck on its own. **nvim-lint removed, 25 → 24** (D14). |
