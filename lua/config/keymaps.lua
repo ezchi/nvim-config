@@ -68,6 +68,7 @@ require("which-key").add({
     { "<leader>a", group = "AI" },
     { "<leader>b", group = "Buffer" },
     { "<leader>c", group = "Code" },
+    { "<leader>cl", group = "LSP" },
     { "<leader>f", group = "File" },
     { "<leader>g", group = "Git" },
     { "<leader>gh", group = "Hunk" },
@@ -150,6 +151,22 @@ map("n", "<leader>xX", pick("diagnostics_buffer"), { desc = "Diagnostics (buffer
 map("n", "<leader>xq", pick("qflist"), { desc = "Quickfix list" })
 map("n", "<leader>xl", pick("loclist"), { desc = "Location list" })
 map("n", "<leader>xd", vim.diagnostic.open_float, { desc = "Line diagnostics" })
+
+-- ─── Compile (SPC c c / SPC c C) ─────────────────────────────────────────────
+-- Same keys as Emacs. See lua/config/compile.lua.
+
+map("n", "<leader>cc", function()
+    require("config.compile").compile()
+end, { desc = "Compile (prompt)" })
+map("n", "<leader>cC", function()
+    require("config.compile").recompile()
+end, { desc = "Recompile (last command)" })
+map("n", "<leader>ck", function()
+    require("config.compile").stop()
+end, { desc = "Stop compilation" })
+
+-- Quickfix navigation for the results. ]q / [q are Neovim built-ins.
+map("n", "<leader>co", "<cmd>copen<CR>", { desc = "Open quickfix" })
 
 -- Toggle format-on-save, globally or for this buffer.
 map("n", "<leader>uf", function()

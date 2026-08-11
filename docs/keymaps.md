@@ -60,10 +60,19 @@ Neovim consolidation is **phase 9**.
 | `SPC c a` | n, x | Code action | `g c a` eglot-code-actions |
 | `SPC c r` | n | Rename symbol | `SPC c l r` eglot-rename |
 | `SPC c R` | n | Rename file | `SPC f R` my/move-current-file |
-| `SPC c c` | n, x | Run codelens | |
-| `SPC c C` | n | Refresh codelens | |
+| `SPC c f` | n, x | Format buffer | `SPC c f` my/format-buffer |
+| `SPC c c` | n | **Compile** (prompt, pre-filled with last) | `SPC c c` compile |
+| `SPC c C` | n | **Recompile** (last command) | `SPC c C` recompile |
+| `SPC c k` | n | Stop compilation | `kill-compilation` |
+| `SPC c o` | n | Open quickfix | `next-error` list |
+| `SPC c l c` | n, x | Run codelens | |
+| `SPC c l C` | n | Refresh codelens | |
+| `SPC c l r` | n | Rename (LSP) | `SPC c l r` eglot-rename |
+| `SPC c l f` | n | Format (LSP) | `SPC c l f` eglot-format |
 
-Emacs also has `SPC c c` compile / `SPC c C` recompile — those land in **phase 8**.
+Compile streams output into a `[compilation]` split and puts errors in the quickfix list —
+`]q` / `[q` to step through them. Verilator, gcc/clang and Python traceback formats are
+recognised. See `lua/config/compile.lua`.
 
 ## `SPC f` — File
 

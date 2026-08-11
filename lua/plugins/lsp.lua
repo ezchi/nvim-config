@@ -11,8 +11,13 @@ return {
             { "gK", function() return vim.lsp.buf.signature_help() end, desc = "Signature Help" },
             { "<c-k>", function() return vim.lsp.buf.signature_help() end, mode = "i", desc = "Signature Help" },
             { "<leader>ca", vim.lsp.buf.code_action, desc = "Code Action", mode = { "n", "x" } },
-            { "<leader>cc", vim.lsp.codelens.run, desc = "Run Codelens", mode = { "n", "x" } },
-            { "<leader>cC", vim.lsp.codelens.refresh, desc = "Refresh & Display Codelens", mode = { "n" } },
+            -- Codelens lives under the `c l` LSP subgroup, mirroring Emacs'
+            -- `c l r` / `c l R` / `c l f`. SPC c c and SPC c C are compile and
+            -- recompile in both editors -- see lua/config/compile.lua.
+            { "<leader>clc", vim.lsp.codelens.run, desc = "Run Codelens", mode = { "n", "x" } },
+            { "<leader>clC", vim.lsp.codelens.refresh, desc = "Refresh & Display Codelens", mode = { "n" } },
+            { "<leader>clf", function() vim.lsp.buf.format() end, desc = "Format (LSP)", mode = { "n" } },
+            { "<leader>clr", vim.lsp.buf.rename, desc = "Rename", mode = { "n" } },
             { "<leader>cr", vim.lsp.buf.rename, desc = "Rename" },
         },
     },

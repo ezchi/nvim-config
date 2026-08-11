@@ -74,7 +74,7 @@ Status values: `TODO` · `IN PROGRESS` · `DONE` · `SKIPPED`
 | 5 | LSP, diagnostics, format, lint | **DONE** | 2026-08-11 | 2 h | 6 |
 | 6 | Languages (one at a time) | **DONE** | 2026-08-11 | 30 min each | — |
 | 7 | Git | **DONE** | 2026-08-11 | 1 h | — |
-| 8 | Terminal, build, run | TODO | | 1 h | — |
+| 8 | Terminal, build, run | **DONE** | 2026-08-11 | 1 h | — |
 | 9 | AI | TODO | | 1 h | — |
 | 10 | Appearance and long tail | TODO | | 1 h | — |
 | 11 | Cutover | TODO | | 1 h | all |
@@ -537,17 +537,52 @@ session doing a real stage → commit → push through it.
 
 **Done when:** ✅ a full stage → commit → push cycle without opening magit.
 
-### Phase 8 — Terminal, build, run · `TODO`
+### Phase 8 — Terminal, build, run · `DONE` (2026-08-11)
 
-- [ ] `eshell` / `vterm` → snacks `terminal` (`<C-/>` already mapped) + tmux
-- [ ] `compile` / `recompile` (`SPC c c` / `SPC c C`) → `:make` + `makeprg`/`errorformat`, or `stevearc/overseer.nvim` for a magit-style task runner. Keep the same keys
-- [ ] `detached.el` → tmux detached panes, no plugin
-- [ ] `proced` → drop, use a terminal
-- [x] tmux navigation — `vim-tmux-navigator` already mirrors the Emacs `my/nav-*` functions
+**Zero plugins.** `compile`/`recompile` is ~110 lines in `lua/config/compile.lua`.
 
-**Done when:** your build/test loop runs from Neovim into quickfix.
+- [x] `eshell` / `vterm` → snacks `terminal` on `<C-/>`, plus tmux. Already mapped
+- [x] `compile` / `recompile` → `SPC c c` / `SPC c C`, **same keys as Emacs**
+- [x] `SPC c k` stop, `SPC c o` open quickfix
+- [x] `detached.el` → tmux detached panes, no plugin
+- [x] `proced` → dropped, use a terminal
+- [x] tmux navigation — `vim-tmux-navigator`, done in Phase 1
 
----
+**Why hand-written rather than `overseer.nvim` or `:make`:** the Emacs workflow being
+replaced is just `compile` — prompt for a shell command, run it async, watch the output,
+jump to errors. `:make` is synchronous and blocks the UI, which is unusable for a Verilator
+build. overseer adds templates and a task list, which is *more* than `compile`, not the same
+thing. `vim.system` + `setqflist` is the actual equivalent and is readable in one sitting.
+See F9 if you later want task templates.
+
+**What it does:** prompt pre-filled with the last command (`completion = "shellcmd"`),
+output streamed live into a `[compilation]` split that follows the tail, quickfix populated
+on exit, `copen` only on failure. `SPC c C` re-runs without prompting.
+
+**Error formats**, most specific first — Verilator leads because its `%Error:` prefix would
+otherwise be eaten by the generic patterns:
+
+| Pattern | Matches |
+|---|---|
+| `%%%trror: %f:%l:%c: %m` | Verilator `%Error:` — the `%t` captures the `E` so quickfix gets the severity |
+| `%%%tarning-%*[A-Z0-9_]: ...` | Verilator `%Warning-UNUSED:` etc |
+| `%f:%l:%c: %trror: %m` | gcc / clang |
+| `  File "%f"\, line %l` | Python tracebacks |
+
+**Two things verification caught:**
+
+1. **Quickfix was full of noise.** `setqflist` with `lines` keeps every unmatched line as an
+   invalid entry, so a build produced 11 entries for 1 real error — you would step through
+   the echoed command and blank lines. Now filtered to `item.valid == 1`.
+2. **`SPC c c` and `SPC c C` were already taken** by codelens from `lua/plugins/lsp.lua`.
+   Emacs has no codelens and uses those keys for compile, so compile won; codelens moved to
+   the `SPC c l` LSP subgroup, which mirrors Emacs' `c l r` / `c l R` / `c l f`.
+
+**Verified** across three cases: a Verilator-format failure (2 entries, `[E]` and `[W]`
+severities, unrelated output filtered), a real `cc` failure (1 entry, correct file/line/col),
+and a successful command (0 entries, no quickfix opened).
+
+**Done when:** ✅ your build/test loop runs from Neovim into quickfix.
 
 ### Phase 9 — AI · `TODO`
 
@@ -640,6 +675,7 @@ One line per working session. Newest last.
 | 2026-08-10 | — | Surveyed both configs; wrote this plan. Decisions D1–D6 locked. |
 | 2026-08-10 | 0 | Baseline done. Health triaged: only real finding is **zero treesitter parsers installed** (I1 confirmed, worse than expected). Two snacks "errors" proved to be headless artifacts — caveat added to §0. lazy-lock verified in sync (27/27). Emacs loads clean. Providers disabled. |
 | 2026-08-10 | 1 | `H` / `L` resolved as D7 — vim defaults on both sides, evil-args binding dropped. Logged F1 to revisit if missed. Phase 1 is unblocked. |
+| 2026-08-11 | 8 | **Done, zero plugins.** `compile`/`recompile` written directly on `vim.system` + `setqflist` (~110 lines) rather than adding overseer — `:make` blocks the UI and overseer is more than `compile` is. Verilator/gcc/python error formats, live output, quickfix on failure. Caught two bugs: unmatched output lines polluting quickfix, and a collision where codelens already held `SPC c c`. Next: **Phase 9** (AI). |
 | 2026-08-11 | 7 | **Done.** One plugin (diffview), 24 → 25 — the one genuine gap, since it is the only source of side-by-side changeset diffs, steppable file history and 3-way merges, and it replaces both `ediff` and `git-timemachine`. The other eight `SPC g` entries came free from `Snacks.picker`'s git sources. Fixed two keymap collisions against the magit map. Next: **Phase 8** (terminal, build, run). |
 | 2026-08-11 | 6 | Verilog linting switched from verible to **slang** at Enze's request — which then made the linter plugin redundant, since slang-server is slang. Measured the overlap, found the CLI re-reports what the LSP already gives, and confirmed bashls runs shellcheck on its own. **nvim-lint removed, 25 → 24** (D14). |
 | 2026-08-11 | 6 | **Done, scoped by file counts rather than by the Emacs module list** — Go (0 files, no toolchain), Rust (1) and VHDL (1) dropped. 8 languages wired, each verified attaching to a real file. 2 plugins (lazydev, nvim-lint), 23 → 25. Verification caught three silent failures: stylua running as an LSP (D13), a linter name that does not exist, and verible writing to stderr. Next: **Phase 7** (git) — neogit is already installed, mostly needs diffview and learning. |
@@ -659,6 +695,7 @@ Deliberately deferred. Not blocking any phase; revisit when the trigger fires.
 
 | # | Item | Trigger to revisit | Raised |
 |---|---|---|---|
+| F9 | No task templates or task list. `compile`/`recompile` covers ad-hoc commands, but there is nothing that enumerates cmake/ctest targets or keeps a list of running tasks. `stevearc/overseer.nvim` is the candidate. | You find yourself retyping the same three build commands, or want to watch several running at once | 2026-08-11 |
 | F8 | No direnv integration inside Neovim. The zsh hook covers launch-time, so this only matters if you `:tcd` to a different project inside a running nvim — the env, and any LSP server already started, keep the old project's `.envrc`. Fix by restarting nvim in that project, or add `direnv/direnv.vim`. | You `:tcd` between projects and an LSP or tool picks up the wrong venv | 2026-08-10 |
 | F7 | No dedicated search-and-replace UI. `MagicDuck/grug-far.nvim` is the candidate; the native `<C-q>` → `:cfdo %s/old/new/g \| update` flow covers the same ground and was chosen instead (D10). | The quickfix flow gets tedious — e.g. you want a live preview of replacements before committing | 2026-08-10 |
 | F6 | ~~**CLOSED in Phase 5**~~ — conform's `trim_whitespace` runs as the `_` fallback for every filetype without a real formatter, verified on a plain `.txt`. Original note: No trailing-whitespace handling. `mini.trailspace` was installed in Phase 2 and removed the same day as unused. **Phase 5 should cover this**: conform.nvim trims trailing whitespace as part of per-language formatting, which is closer to ws-butler's intent than a whole-buffer trim anyway. Check it there before adding anything. | Phase 5, or you notice whitespace creeping into diffs | 2026-08-10 |
