@@ -44,8 +44,9 @@ return {
     { "<leader>n",  function() Snacks.notifier.show_history() end, desc = "Notification History" },
     { "<leader>bd", function() Snacks.bufdelete() end, desc = "Delete Buffer" },
     { "<leader>cR", function() Snacks.rename.rename_file() end, desc = "Rename File" },
-    { "<leader>gB", function() Snacks.gitbrowse() end, desc = "Git Browse" },
-    { "<leader>glb", function() Snacks.git.blame_line() end, desc = "Git Blame Line" },
+    -- gB is blame (matching magit) and glb is this file's log, so browse
+    -- moves to go. See docs/keymaps.md.
+    { "<leader>go", function() Snacks.gitbrowse() end, desc = "Open in browser" },
     { "<leader>un", function() Snacks.notifier.hide() end, desc = "Dismiss All Notifications" },
     { "<c-/>",      function() Snacks.terminal.toggle() end, desc = "Toggle Terminal", mode = { "n", "t" } },
     { "<c-_>",      function() Snacks.terminal.toggle() end, desc = "which_key_ignore", mode = { "n", "t" } },

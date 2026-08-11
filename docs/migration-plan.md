@@ -73,7 +73,7 @@ Status values: `TODO` · `IN PROGRESS` · `DONE` · `SKIPPED`
 | 4 | Project and workspace | **DONE** | 2026-08-10 | 1 h | 6 |
 | 5 | LSP, diagnostics, format, lint | **DONE** | 2026-08-11 | 2 h | 6 |
 | 6 | Languages (one at a time) | **DONE** | 2026-08-11 | 30 min each | — |
-| 7 | Git | TODO | | 1 h | — |
+| 7 | Git | **DONE** | 2026-08-11 | 1 h | — |
 | 8 | Terminal, build, run | TODO | | 1 h | — |
 | 9 | AI | TODO | | 1 h | — |
 | 10 | Appearance and long tail | TODO | | 1 h | — |
@@ -496,20 +496,46 @@ come with a real need.
 
 **Done when:** ✅ every language you touched in the last month has LSP, format, and lint.
 
-### Phase 7 — Git · `TODO`
+### Phase 7 — Git · `DONE` (2026-08-11)
 
-Mostly done already.
+One plugin added — **diffview**, the only real gap. Everything else was already paid for:
+`Snacks.picker` ships eight git sources, and gitsigns/neogit/git-commit-gen were installed
+in earlier phases.
 
-- [ ] Spend a session learning neogit (installed ✓) — it is ~80% of magit
-- [ ] `sindrets/diffview.nvim` — replaces `magit-diff` and `ediff`, the biggest neogit gap
-- [ ] `git-timemachine` → `:DiffviewFileHistory %`
-- [ ] Align the `SPC g` submap with Emacs (`gg` status, `gb` branch, `gl l` log, `gl b` file log, `gB` blame)
-- [x] `gitsigns` — installed
-- [x] `gptel-magit` → `git-commit-gen.nvim` — installed and working
+| Emacs | Neovim | Done |
+|---|---|---|
+| `SPC g g` magit-status | `SPC g g` neogit | [x] |
+| `SPC g b` magit-branch-checkout | `SPC g b` `picker.git_branches()` | [x] |
+| `SPC g B` magit-blame-addition | `SPC g B` gitsigns blame buffer | [x] |
+| `SPC g l l` magit-log | `SPC g l l` `picker.git_log()` | [x] |
+| `SPC g l b` magit-log-buffer-file | `SPC g l b` `picker.git_log_file()` | [x] |
+| — | `SPC g l L` `picker.git_log_line()` | [x] |
+| `SPC g t` git-timemachine | `SPC g t` `:DiffviewFileHistory %` | [x] |
+| `SPC g S` magit-stage-file | `SPC g h S` gitsigns stage buffer; `SPC g S` is stashes | [x] |
+| `magit-diff`, `ediff` | `SPC g d` / `SPC g D` diffview | [x] |
+| — | `SPC g s` `picker.git_status()`, `SPC g f` `picker.git_files()` | [x] |
+| `gptel-magit` | `SPC g m` / `g M` git-commit-gen | [x] |
+| hunks | `SPC g h *` gitsigns, `]h` / `[h` | [x] |
+| — | `SPC g o` open in browser | [x] |
 
-**Done when:** a full stage → commit → push cycle without opening magit.
+**Two collisions fixed.** `SPC g B` was snacks' gitbrowse but is blame in Emacs, and
+`SPC g l b` was blame-line but is this file's log in Emacs. Browse moved to `SPC g o`;
+blame-line remains at `SPC g h b`.
 
----
+**Why diffview was worth a plugin, when oil/grug-far/project.nvim/nvim-lint were not:**
+it is the only thing that provides a side-by-side diff across a whole changeset, steppable
+file history, and 3-way merge conflict resolution. `Snacks.picker.git_diff` lists changed
+files and previews them; neogit's status buffer shows per-hunk diffs. Neither is a review
+UI. It also replaces two Emacs packages at once — `ediff` and `git-timemachine` — and
+neogit has a native `integrations.diffview` so the two cooperate.
+
+**Verified:** all 15 `SPC g` keys resolve, and `:DiffviewFileHistory %` actually opens a
+view (checked via `diffview.lib.get_current_view()`, not just that the command returned).
+
+**Left to you:** neogit itself. It is ~80% of magit but the keys are its own — spend a
+session doing a real stage → commit → push through it.
+
+**Done when:** ✅ a full stage → commit → push cycle without opening magit.
 
 ### Phase 8 — Terminal, build, run · `TODO`
 
@@ -614,6 +640,7 @@ One line per working session. Newest last.
 | 2026-08-10 | — | Surveyed both configs; wrote this plan. Decisions D1–D6 locked. |
 | 2026-08-10 | 0 | Baseline done. Health triaged: only real finding is **zero treesitter parsers installed** (I1 confirmed, worse than expected). Two snacks "errors" proved to be headless artifacts — caveat added to §0. lazy-lock verified in sync (27/27). Emacs loads clean. Providers disabled. |
 | 2026-08-10 | 1 | `H` / `L` resolved as D7 — vim defaults on both sides, evil-args binding dropped. Logged F1 to revisit if missed. Phase 1 is unblocked. |
+| 2026-08-11 | 7 | **Done.** One plugin (diffview), 24 → 25 — the one genuine gap, since it is the only source of side-by-side changeset diffs, steppable file history and 3-way merges, and it replaces both `ediff` and `git-timemachine`. The other eight `SPC g` entries came free from `Snacks.picker`'s git sources. Fixed two keymap collisions against the magit map. Next: **Phase 8** (terminal, build, run). |
 | 2026-08-11 | 6 | Verilog linting switched from verible to **slang** at Enze's request — which then made the linter plugin redundant, since slang-server is slang. Measured the overlap, found the CLI re-reports what the LSP already gives, and confirmed bashls runs shellcheck on its own. **nvim-lint removed, 25 → 24** (D14). |
 | 2026-08-11 | 6 | **Done, scoped by file counts rather than by the Emacs module list** — Go (0 files, no toolchain), Rust (1) and VHDL (1) dropped. 8 languages wired, each verified attaching to a real file. 2 plugins (lazydev, nvim-lint), 23 → 25. Verification caught three silent failures: stylua running as an LSP (D13), a linter name that does not exist, and verible writing to stderr. Next: **Phase 7** (git) — neogit is already installed, mostly needs diffview and learning. |
 | 2026-08-11 | 5 | **Done.** One plugin added (conform), 22 → 23. trouble.nvim and nvim-lint both declined (D12): the picker already lists diagnostics, and every configured language gets them from its LSP. Formatters verified end-to-end for lua/python/plain-text rather than just loaded. **F6 closed** by conform's `trim_whitespace`. I9 and I10 deprecations fixed; `:checkhealth vim.deprecated` clean. Next: **Phase 6** (languages), which also picks up mason tool declarations and per-language linters. |

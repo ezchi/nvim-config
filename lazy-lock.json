@@ -3,6 +3,7 @@
   "clangd_extensions.nvim": { "branch": "main", "commit": "872893cb061044a4cc7ced59c0f2fe2d70db4382" },
   "cliproxyapi.nvim": { "branch": "main", "commit": "e708c0e17ec239902b1a7dd291ec46d1a35e0e24" },
   "conform.nvim": { "branch": "master", "commit": "619363c30309d29ffa631e67c8183f2a72caa373" },
+  "diffview.nvim": { "branch": "main", "commit": "4516612fe98ff56ae0415a259ff6361a89419b0a" },
   "flash.nvim": { "branch": "main", "commit": "b6346946d10d07998efee029fb0f7a593806d0cd" },
   "git-commit-gen.nvim": { "branch": "main", "commit": "b41cf4bfae89804679cdd09a1e4f0e603fa005de" },
   "gitsigns.nvim": { "branch": "main", "commit": "8d82c240f190fc33723d48c308ccc1ed8baad69d" },

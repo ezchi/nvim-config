@@ -200,6 +200,18 @@ map({ "n", "x" }, "<leader>*", pick("grep_word"), { desc = "Grep symbol at point
 -- Buffer list also under its own prefix, matching `SPC b b` in Emacs.
 map("n", "<leader>bb", pick("buffers"), { desc = "Switch buffer" })
 
+-- ─── Git pickers (SPC g) ─────────────────────────────────────────────────────
+-- Laid out to match the magit map in Emacs. The rest of SPC g lives with its
+-- plugin: gg/gd/gt with neogit and diffview, gh* hunks with gitsigns.
+
+map("n", "<leader>gs", pick("git_status"), { desc = "Git status" })
+map("n", "<leader>gb", pick("git_branches"), { desc = "Branches" })
+map("n", "<leader>gS", pick("git_stash"), { desc = "Stashes" })
+map("n", "<leader>gll", pick("git_log"), { desc = "Log (repo)" })
+map("n", "<leader>glb", pick("git_log_file"), { desc = "Log (this file)" })
+map("n", "<leader>glL", pick("git_log_line"), { desc = "Log (this line)" })
+map("n", "<leader>gf", pick("git_files"), { desc = "Git files" })
+
 -- Help (SPC h) — mirrors the helpful/describe block in Emacs.
 map("n", "<leader>hh", pick("help"), { desc = "Help tags" })
 map("n", "<leader>hk", pick("keymaps"), { desc = "Keymaps" })

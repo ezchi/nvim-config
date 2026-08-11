@@ -79,17 +79,28 @@ Emacs also has `SPC c c` compile / `SPC c C` recompile — those land in **phase
 | Key | Mode | Action | Emacs |
 |---|---|---|---|
 | `SPC g g` | n | Neogit status | `SPC g g` magit-status |
-| `SPC g B` | n | Open in browser | |
+| `SPC g s` | n | Git status (picker) | `SPC g g` |
+| `SPC g f` | n | Git files | |
+| `SPC g b` | n | Branches | `SPC g b` magit-branch-checkout |
+| `SPC g B` | n | Blame buffer | `SPC g B` magit-blame-addition |
+| `SPC g S` | n | Stashes | |
+| `SPC g o` | n | Open in browser | |
+| `SPC g d` | n | Diff working tree | `magit-diff` / `ediff` |
+| `SPC g D` | n | Close diff view | |
+| `SPC g t` | n | File history (time machine) | `SPC g t` git-timemachine |
+| `SPC g T` | n | Repo history | |
+| `SPC g l l` | n | Log (repo) | `SPC g l l` magit-log |
+| `SPC g l b` | n | Log (this file) | `SPC g l b` magit-log-buffer-file |
+| `SPC g l L` | n | Log (this line) | |
 | `SPC g m` | n | Generate commit message (AI) | gptel-magit |
 | `SPC g M` | n | Change commit-gen model | |
-| `SPC g l b` | n | Blame line | `SPC g B` magit-blame-addition |
 | `SPC g h s` | n, x | Stage hunk | magit |
 | `SPC g h r` | n, x | Reset hunk | magit |
 | `SPC g h S` | n | Stage buffer | `SPC g S` magit-stage-file |
 | `SPC g h u` | n | Undo stage hunk | `SPC g U` magit-unstage-file |
 | `SPC g h R` | n | Reset buffer | |
 | `SPC g h p` | n | Preview hunk inline | |
-| `SPC g h b` | n | Blame line (full) | `SPC g B` |
+| `SPC g h b` | n | Blame line (full) | |
 | `SPC g h B` | n | Blame buffer | |
 | `SPC g h d` | n | Diff this | ediff |
 | `SPC g h D` | n | Diff this against `~` | |

@@ -49,6 +49,8 @@ return {
                 map("n", "<leader>ghp", gs.preview_hunk_inline, "Preview Hunk Inline")
                 map("n", "<leader>ghb", function() gs.blame_line({ full = true }) end, "Blame Line")
                 map("n", "<leader>ghB", function() gs.blame() end, "Blame Buffer")
+                -- `SPC g B` is magit-blame-addition in Emacs; keep the alias.
+                map("n", "<leader>gB", function() gs.blame() end, "Blame Buffer")
                 map("n", "<leader>ghd", gs.diffthis, "Diff This")
                 map("n", "<leader>ghD", function() gs.diffthis("~") end, "Diff This ~")
                 map({ "o", "x" }, "ih", ":<C-U>Gitsigns select_hunk<CR>", "GitSigns Select Hunk")
@@ -62,14 +64,34 @@ return {
         dependencies = {
             "nvim-lua/plenary.nvim",
             "folke/snacks.nvim",
+            "sindrets/diffview.nvim",
         },
         opts = {
             -- Was telescope; neogit has a native snacks picker integration.
-            integrations = { snacks = true },
+            integrations = { snacks = true, diffview = true },
         },
         cmd = "Neogit",
         keys = {
-            { "<leader>gg", "<cmd>Neogit<cr>", desc = "Show Neogit UI" }
-        }
+            { "<leader>gg", "<cmd>Neogit<cr>", desc = "Neogit status" },
+        },
+    },
+
+    -- The one thing snacks' git pickers and neogit's status buffer do not
+    -- give you: a side-by-side diff across a whole changeset, and file
+    -- history you can step through. That is magit-diff + ediff +
+    -- git-timemachine in one plugin.
+    {
+        "sindrets/diffview.nvim",
+        cmd = { "DiffviewOpen", "DiffviewClose", "DiffviewFileHistory", "DiffviewToggleFiles" },
+        opts = {
+            enhanced_diff_hl = true,
+        },
+        keys = {
+            { "<leader>gd", "<cmd>DiffviewOpen<cr>", desc = "Diff working tree" },
+            { "<leader>gD", "<cmd>DiffviewClose<cr>", desc = "Close diff view" },
+            -- git-timemachine: step through this file's history.
+            { "<leader>gt", "<cmd>DiffviewFileHistory %<cr>", desc = "File history (time machine)" },
+            { "<leader>gT", "<cmd>DiffviewFileHistory<cr>", desc = "Repo history" },
+        },
     },
 }
